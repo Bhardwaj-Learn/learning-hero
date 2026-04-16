@@ -324,6 +324,40 @@
     .collection-card .big-sticker { font-size:2rem; margin-bottom:6px; }
     .collection-card .count { color:var(--muted); font-weight:800; font-size:0.95rem; }
 
+    .manage-tools {
+      display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;
+    }
+
+    .manage-profile-grid {
+      display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-top:14px;
+      text-align:left;
+    }
+
+    .manage-profile-card {
+      background: linear-gradient(180deg, #ffffff, #f8f5ff); border-radius:20px;
+      padding:14px 12px; box-shadow: 0 8px 18px rgba(74, 66, 106, 0.11);
+      border: 3px solid transparent;
+    }
+
+    .manage-profile-card.selected {
+      border-color: rgba(138,124,255,0.45);
+      background: linear-gradient(180deg, #f9f7ff, #efecff);
+    }
+
+    .manage-profile-head {
+      display:flex; align-items:center; gap:10px; margin-bottom:8px;
+      font-weight:900;
+    }
+
+    .manage-profile-avatar {
+      font-size:1.7rem; width:42px; height:42px; border-radius:14px;
+      display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.9);
+    }
+
+    .manage-profile-meta {
+      color:var(--muted); font-size:0.92rem; line-height:1.35; margin-bottom:12px;
+    }
+
     .settings-list { display:flex; flex-direction:column; gap:12px; text-align:left; margin-top:14px; }
     .settings-row {
       width:100%; border-radius:18px; padding:14px 16px; text-align:left;
@@ -348,6 +382,91 @@
       .header-actions, .nav-row { width:100%; }
       .header-actions .soft-btn, .nav-row .soft-btn { flex:1; }
     }
+
+    /* ── Match Pairs ── */
+    .pairs-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .pair-card {
+      aspect-ratio: 1;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #9c90ff, #7d6eff);
+      box-shadow: 0 8px 18px rgba(74,66,106,0.18);
+      border: 3px solid transparent;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(1.3rem, 3.5vw, 2rem);
+      font-weight: 900;
+      color: white;
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+      perspective: 600px;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 64px;
+    }
+    .pair-card.face-down {
+      background: linear-gradient(180deg, #9c90ff, #7d6eff);
+      color: transparent;
+      font-size: 1.6rem;
+    }
+    .pair-card.face-down::after { content: '?'; color: rgba(255,255,255,0.7); font-size: 1.6rem; }
+    .pair-card.flipped {
+      background: linear-gradient(180deg, #ffffff, #f4f3ff);
+      color: var(--text);
+      border-color: rgba(138,124,255,0.4);
+    }
+    .pair-card.matched {
+      background: linear-gradient(180deg, #dff6e5, #bce8c8);
+      border-color: #7dc98f;
+      color: var(--text);
+      cursor: default;
+      transform: scale(0.96);
+    }
+    .pair-card.wrong-flash {
+      background: linear-gradient(180deg, #fde8e8, #f7caca);
+      border-color: #e79b9b;
+    }
+    .pair-card:active:not(.matched) { transform: scale(0.94); }
+    .pairs-score {
+      text-align: center; color: var(--muted); font-weight: 800;
+      font-size: 0.97rem; margin-bottom: 8px;
+    }
+
+    /* ── Number Ordering ── */
+    .order-slots {
+      display: flex; justify-content: center; gap: 12px;
+      flex-wrap: wrap; margin: 12px 0 18px;
+    }
+    .order-slot {
+      width: 64px; height: 72px; border-radius: 16px;
+      background: linear-gradient(180deg, #ffffff, #f4f3ff);
+      box-shadow: 0 8px 18px rgba(74,66,106,0.10);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.9rem; font-weight: 900;
+      border: 3px dashed rgba(138,124,255,0.28);
+      cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    }
+    .order-slot.filled { border-style: solid; border-color: rgba(111,200,192,0.55); }
+    .order-slot.target { border-color: #8a7cff; background: linear-gradient(180deg,#f0eeff,#e8e4ff); }
+    .order-slot.correct-flash { background: linear-gradient(180deg,#dff6e5,#bce8c8); border-color:#7dc98f; border-style:solid; }
+    .order-tile-grid {
+      display: flex; justify-content: center; gap: 10px;
+      flex-wrap: wrap; margin-top: 10px;
+    }
+    .order-tile {
+      width: 64px; height: 68px; border-radius: 18px;
+      background: linear-gradient(180deg,#ffffff,#f4f3ff);
+      box-shadow: 0 8px 18px rgba(74,66,106,0.10);
+      border: 3px solid transparent;
+      font-size: 1.8rem; font-weight: 900; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.12s, border-color 0.12s, background 0.12s;
+    }
+    .order-tile.selected { border-color: #8a7cff; background: linear-gradient(180deg,#f0eeff,#e8e4ff); transform: scale(1.07); }
+    .order-tile.used { opacity: 0.38; border-color: rgba(138,124,255,0.14); cursor: default; }
   </style>
 </head>
 <body>
@@ -361,6 +480,14 @@
       <div class="panel">
         <h2>Who is playing?</h2>
         <div id="profiles-grid" class="profiles-grid"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Parent tools</h2>
+        <p class="tiny-note" style="text-align:left; margin-top:0;">Manage profiles before a child starts playing.</p>
+        <div class="manage-tools">
+          <button id="open-profile-manager-btn" class="soft-btn warning">🛠️ Manage Profiles</button>
+        </div>
       </div>
 
       <div class="panel">
@@ -389,10 +516,13 @@
           <button id="open-stickers-home-btn" class="soft-btn">🏆 Stickers</button>
           <button id="change-avatar-btn" class="soft-btn">🪄 Change Icon</button>
           <button id="switch-profile-btn" class="soft-btn">👥 Profiles</button>
-          <button id="settings-hold-btn" class="soft-btn warning hold-btn">
-            🔒 Parent / Settings
-            <span id="hold-progress" class="hold-progress"></span>
-          </button>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <button id="settings-hold-btn" class="soft-btn warning hold-btn">
+              🔒 Parent / Settings
+              <span id="hold-progress" class="hold-progress"></span>
+            </button>
+            <div class="tiny-note" style="margin-top:0; text-align:center;">Hold to open</div>
+          </div>
         </div>
       </div>
 
@@ -473,6 +603,18 @@
     </div>
   </div>
 
+  <div id="profile-manager-modal-wrap" class="modal-wrap">
+    <div class="modal">
+      <h3>🛠️ Manage Profiles</h3>
+      <p>Select one or more child profiles to delete.</p>
+      <div id="profile-manager-grid" class="manage-profile-grid"></div>
+      <div style="margin-top:14px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <button id="delete-selected-profiles-btn" class="soft-btn warning">🗑️ Delete Selected</button>
+        <button id="close-profile-manager-btn" class="soft-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
   <div id="settings-modal-wrap" class="modal-wrap">
     <div class="modal">
       <h3>🔒 Parent / Settings</h3>
@@ -525,12 +667,24 @@
       settingsHoldTimer: null,
       settingsHoldProgressTimer: null,
       answerLocked: false,
+      profileManagerSelection: [],
       preferredVoiceName: '',
       lastSpokenText: '',
       round: { index: 1, correct: 0, attempts: 0 },
       builder: null,
       stickerResumeMode: null,
-      stickerChoiceLocked: false
+      stickerChoiceLocked: false,
+      englishRecentModes: [],
+      englishRecentWords: [],
+      pairsState: null,
+      mathRecentModes: [],
+      orderState: null,
+      moneyRecentModes: [],
+      logicRecentModes: [],
+      alphabetsRecentModes: [],
+      numbersRecentModes: [],
+      shapesRecentModes: [],
+      colorsRecentModes: []
     };
 
     const el = {
@@ -572,6 +726,11 @@
       collectionModalWrap: document.getElementById('collection-modal-wrap'),
       collectionGrid: document.getElementById('collection-grid'),
       closeCollectionModalBtn: document.getElementById('close-collection-modal-btn'),
+      profileManagerModalWrap: document.getElementById('profile-manager-modal-wrap'),
+      profileManagerGrid: document.getElementById('profile-manager-grid'),
+      openProfileManagerBtn: document.getElementById('open-profile-manager-btn'),
+      deleteSelectedProfilesBtn: document.getElementById('delete-selected-profiles-btn'),
+      closeProfileManagerBtn: document.getElementById('close-profile-manager-btn'),
       avatarModalWrap: document.getElementById('avatar-modal-wrap'),
       avatarChangeGrid: document.getElementById('avatar-change-grid'),
       closeAvatarModalBtn: document.getElementById('close-avatar-modal-btn'),
@@ -587,19 +746,80 @@
     const audioCtx = AudioContextClass ? new AudioContextClass() : null;
 
     const WORD_BANK = [
+      // Level 1 — 3-letter simple words
       { word: 'CAT', emoji: '🐱', hint: 'A small pet that says meow', level: 1, theme: 'animals' },
       { word: 'DOG', emoji: '🐶', hint: 'A friendly pet that barks', level: 1, theme: 'animals' },
-      { word: 'SUN', emoji: '☀️', hint: 'It shines in the sky', level: 1, theme: 'nature' },
-      { word: 'TREE', emoji: '🌳', hint: 'It has a trunk and leaves', level: 1, theme: 'nature' },
-      { word: 'CAKE', emoji: '🍰', hint: 'A sweet treat for birthdays', level: 1, theme: 'food' },
-      { word: 'STAR', emoji: '⭐', hint: 'It twinkles in the night sky', level: 1, theme: 'nature' },
+      { word: 'SUN', emoji: '☀️', hint: 'It shines bright in the sky', level: 1, theme: 'nature' },
+      { word: 'BUS', emoji: '🚌', hint: 'A big vehicle for passengers', level: 1, theme: 'transport' },
+      { word: 'CUP', emoji: '🥤', hint: 'You drink from this', level: 1, theme: 'objects' },
+      { word: 'HEN', emoji: '🐔', hint: 'A female chicken', level: 1, theme: 'animals' },
+      { word: 'PIG', emoji: '🐷', hint: 'A pink farm animal', level: 1, theme: 'animals' },
+      { word: 'COW', emoji: '🐄', hint: 'It gives us milk', level: 1, theme: 'animals' },
+      { word: 'BEE', emoji: '🐝', hint: 'It makes honey and buzzes', level: 1, theme: 'animals' },
+      { word: 'ANT', emoji: '🐜', hint: 'A tiny bug that carries food', level: 1, theme: 'animals' },
+      { word: 'BAG', emoji: '👜', hint: 'You carry things in this', level: 1, theme: 'objects' },
+      { word: 'HAT', emoji: '🎩', hint: 'You wear this on your head', level: 1, theme: 'clothing' },
+      { word: 'MAP', emoji: '🗺️', hint: 'It shows you where places are', level: 1, theme: 'objects' },
+      { word: 'JAR', emoji: '🫙', hint: 'A glass container with a lid', level: 1, theme: 'objects' },
+      { word: 'FAN', emoji: '<svg viewBox="0 0 100 110" width="56" height="56" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="46" r="38" fill="none" stroke="#7d6eff" stroke-width="4"/><ellipse cx="50" cy="22" rx="9" ry="19" fill="#9c90ff" transform="rotate(0 50 46)"/><ellipse cx="50" cy="22" rx="9" ry="19" fill="#9c90ff" transform="rotate(120 50 46)"/><ellipse cx="50" cy="22" rx="9" ry="19" fill="#9c90ff" transform="rotate(240 50 46)"/><circle cx="50" cy="46" r="8" fill="#7d6eff"/><circle cx="50" cy="46" r="4" fill="#f4f3ff"/><rect x="46" y="84" width="8" height="14" rx="3" fill="#7d6eff"/><rect x="28" y="96" width="44" height="8" rx="4" fill="#7d6eff"/></svg>', hint: 'It spins to cool you down', level: 1, theme: 'objects', svgEmoji: true },
+      { word: 'LOG', emoji: '🪵', hint: 'A piece of a tree trunk', level: 1, theme: 'nature' },
+      { word: 'EGG', emoji: '🥚', hint: 'A bird lays this', level: 1, theme: 'food' },
+      { word: 'NET', emoji: '🕸️', hint: 'You catch things with this', level: 1, theme: 'objects' },
+      { word: 'BED', emoji: '🛏️', hint: 'You sleep on this at night', level: 1, theme: 'home' },
+      { word: 'POT', emoji: '🫕', hint: 'Used for cooking on the stove', level: 1, theme: 'home' },
+      // Level 2 — 4-letter words
       { word: 'FISH', emoji: '🐟', hint: 'It swims in water', level: 2, theme: 'animals' },
       { word: 'FROG', emoji: '🐸', hint: 'It jumps and says ribbit', level: 2, theme: 'animals' },
-      { word: 'GRASS', emoji: '🌿', hint: 'Green plants on the ground', level: 2, theme: 'nature' },
-      { word: 'SILVER', emoji: '🥈', hint: 'A shiny color', level: 2, theme: 'describing' },
-      { word: 'MOTHER', emoji: '👩', hint: 'A family word', level: 2, theme: 'family' },
-      { word: 'FATHER', emoji: '👨', hint: 'A family word', level: 3, theme: 'family' }
+      { word: 'BIRD', emoji: '🐦', hint: 'It has wings and can fly', level: 2, theme: 'animals' },
+      { word: 'BEAR', emoji: '🐻', hint: 'A big furry animal in the forest', level: 2, theme: 'animals' },
+      { word: 'DUCK', emoji: '🦆', hint: 'It swims and says quack', level: 2, theme: 'animals' },
+      { word: 'LAMB', emoji: '🐑', hint: 'A baby sheep', level: 2, theme: 'animals' },
+      { word: 'CRAB', emoji: '🦀', hint: 'It has claws and walks sideways', level: 2, theme: 'animals' },
+      { word: 'CAKE', emoji: '🎂', hint: 'A sweet treat for birthdays', level: 2, theme: 'food' },
+      { word: 'MILK', emoji: '🥛', hint: 'A white drink from cows', level: 2, theme: 'food' },
+      { word: 'CORN', emoji: '🌽', hint: 'A yellow vegetable on a cob', level: 2, theme: 'food' },
+      { word: 'TREE', emoji: '🌳', hint: 'It has a trunk and leaves', level: 2, theme: 'nature' },
+      { word: 'RAIN', emoji: '🌧️', hint: 'Water falling from clouds', level: 2, theme: 'nature' },
+      { word: 'STAR', emoji: '⭐', hint: 'It twinkles in the night sky', level: 2, theme: 'nature' },
+      { word: 'MOON', emoji: '🌙', hint: 'It glows in the night sky', level: 2, theme: 'nature' },
+      { word: 'SNOW', emoji: '❄️', hint: 'White fluffy flakes that fall in winter', level: 2, theme: 'nature' },
+      { word: 'BOAT', emoji: '⛵', hint: 'It floats on water', level: 2, theme: 'transport' },
+      { word: 'CARS', emoji: '🚗', hint: 'A vehicle with four wheels', level: 2, theme: 'transport' },
+      { word: 'BOOK', emoji: '📖', hint: 'You read pages in this', level: 2, theme: 'objects' },
+      { word: 'BELL', emoji: '🔔', hint: 'It rings and makes a sound', level: 2, theme: 'objects' },
+      { word: 'DRUM', emoji: '🥁', hint: 'You hit it to make music', level: 2, theme: 'objects' },
+      { word: 'JUMP', emoji: '🦘', hint: 'What a kangaroo loves to do', level: 2, theme: 'action' },
+      { word: 'SING', emoji: '🎤', hint: 'What you do with your voice to music', level: 2, theme: 'action' },
+      // Level 3 — 5-letter words
+      { word: 'TIGER', emoji: '🐯', hint: 'An orange cat with black stripes', level: 3, theme: 'animals' },
+      { word: 'HORSE', emoji: '🐴', hint: 'You can ride this tall animal', level: 3, theme: 'animals' },
+      { word: 'SHARK', emoji: '🦈', hint: 'A big fish with sharp teeth', level: 3, theme: 'animals' },
+      { word: 'EAGLE', emoji: '🦅', hint: 'A large bird that soars high', level: 3, theme: 'animals' },
+      { word: 'SNAIL', emoji: '🐌', hint: 'A slow animal that carries its home', level: 3, theme: 'animals' },
+      { word: 'PIZZA', emoji: '🍕', hint: 'A round food with cheese and toppings', level: 3, theme: 'food' },
+      { word: 'BREAD', emoji: '🍞', hint: 'You make toast with this', level: 3, theme: 'food' },
+      { word: 'GRAPE', emoji: '🍇', hint: 'Small round purple or green fruit', level: 3, theme: 'food' },
+      { word: 'APPLE', emoji: '🍎', hint: 'A round red or green fruit', level: 3, theme: 'food' },
+      { word: 'LEMON', emoji: '🍋', hint: 'A sour yellow citrus fruit', level: 3, theme: 'food' },
+      { word: 'CLOUD', emoji: '☁️', hint: 'White fluffy shapes in the sky', level: 3, theme: 'nature' },
+      { word: 'PLANT', emoji: '🌱', hint: 'A living thing that grows in soil', level: 3, theme: 'nature' },
+      { word: 'FLAME', emoji: '🔥', hint: 'Hot bright light from fire', level: 3, theme: 'nature' },
+      { word: 'TRAIN', emoji: '🚂', hint: 'It runs on tracks and carries people', level: 3, theme: 'transport' },
+      { word: 'TRUCK', emoji: '🚚', hint: 'A big vehicle that carries heavy loads', level: 3, theme: 'transport' },
+      { word: 'PIANO', emoji: '🎹', hint: 'A musical instrument with black and white keys', level: 3, theme: 'objects' },
+      { word: 'CHAIR', emoji: '🪑', hint: 'You sit on this', level: 3, theme: 'home' },
+      { word: 'TABLE', emoji: '🪵', hint: 'You eat your meals at this', level: 3, theme: 'home' },
+      { word: 'BRUSH', emoji: '🖌️', hint: 'Used for painting pictures', level: 3, theme: 'objects' },
+      { word: 'CLOCK', emoji: '🕐', hint: 'It tells you what time it is', level: 3, theme: 'objects' },
     ];
+
+    function renderEmoji(emoji, size = '4rem') {
+      if (typeof emoji === 'string' && emoji.trim().startsWith('<svg')) {
+        const px = size.includes('rem') ? parseFloat(size) * 16 : parseFloat(size);
+        return emoji.replace(/width="[^"]*"/, `width="${px}"`).replace(/height="[^"]*"/, `height="${px}"`);
+      }
+      return `<span style="font-size:${size};">${emoji}</span>`;
+    }
 
     function defaultSubjectStats() {
       const stats = {};
@@ -882,7 +1102,7 @@
         const stats = profile.subjectStats[subject.id] || { level: 1, correct: 0 };
         const towardNext = stats.correct % 6;
         const pct = Math.round((towardNext / 6) * 100);
-        const nextStepText = towardNext === 0 && stats.correct > 0 ? 'Level up!' : `${towardNext}/6 to next level`;
+        const nextStepText = towardNext === 0 && stats.correct > 0 ? 'Level up! Correct answers reset for the next level.' : `${towardNext}/6 correct answers to next level`;
         return `
           <div style="margin:10px 0;">
             <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:6px;">
@@ -952,6 +1172,14 @@
       }
       state.round = { index: 1, correct: 0, attempts: 0 };
       state.stickerResumeMode = null;
+      if (subjectId === 'english') { state.englishRecentModes = []; state.englishRecentWords = []; }
+      if (subjectId === 'math')    { state.mathRecentModes = []; }
+      if (subjectId === 'money')   { state.moneyRecentModes = []; }
+      if (subjectId === 'logic')   { state.logicRecentModes = []; }
+      if (subjectId === 'alphabets') { state.alphabetsRecentModes = []; }
+      if (subjectId === 'numbers')   { state.numbersRecentModes = []; }
+      if (subjectId === 'shapes')    { state.shapesRecentModes = []; }
+      if (subjectId === 'colors')    { state.colorsRecentModes = []; }
       setScreen('question');
       nextQuestion();
     }
@@ -989,6 +1217,10 @@
       const q = state.currentQuestion;
       if (!q) return;
       state.builder = null;
+      state.pairsState = null;
+      state.orderState = null;
+      const oldScore = document.getElementById('pairs-score');
+      if (oldScore) oldScore.remove();
       el.promptVisual.innerHTML = q.visualHtml || escapeHtml(q.promptText || '');
       el.promptSubtitle.textContent = q.subtitle || '';
       el.feedbackLine.textContent = '';
@@ -998,6 +1230,16 @@
 
       if (q.interaction === 'builder') {
         renderBuilderQuestion(q);
+        return;
+      }
+
+      if (q.interaction === 'pairs') {
+        renderPairsQuestion(q);
+        return;
+      }
+
+      if (q.interaction === 'order') {
+        renderOrderQuestion(q);
         return;
       }
 
@@ -1229,7 +1471,8 @@
     }
 
     function revealCorrectAnswer() {
-      if (state.currentQuestion?.interaction === 'builder') {
+      const interaction = state.currentQuestion?.interaction;
+      if (interaction === 'builder') {
         const boxes = document.getElementById('builder-boxes');
         if (boxes) {
           const answer = String(state.currentQuestion.correctValue).split('');
@@ -1240,6 +1483,11 @@
         }
         return;
       }
+      // order: already handled inside orderCheck; nothing extra to do here
+      if (interaction === 'order') return;
+      // pairs: already handled inside handlePairCardClick; nothing extra to do here
+      if (interaction === 'pairs') return;
+      if (!state.currentQuestion.choices) return;
       Array.from(el.answersGrid.children).forEach((btn, idx) => {
         const choice = state.currentQuestion.choices[idx];
         if (choice && choice.value === state.currentQuestion.correctValue) btn.classList.add('correct');
@@ -1311,6 +1559,71 @@
 
     function closeStickerCollection() {
       el.collectionModalWrap.classList.remove('active');
+    }
+
+    function renderProfileManager() {
+      el.profileManagerGrid.innerHTML = '';
+      if (!state.profiles.length) {
+        el.profileManagerGrid.innerHTML = '<div class="collection-card" style="grid-column:1 / -1;"><div class="count">No profiles to manage yet.</div></div>';
+        return;
+      }
+      state.profiles.forEach(profile => {
+        ensureProfileStats(profile);
+        const selected = state.profileManagerSelection.includes(profile.id);
+        const card = document.createElement('button');
+        card.className = 'manage-profile-card' + (selected ? ' selected' : '');
+        card.innerHTML = `
+          <div class="manage-profile-head">
+            <div class="manage-profile-avatar">${profile.avatar}</div>
+            <div>${escapeHtml(profile.name)}</div>
+          </div>
+          <div class="manage-profile-meta">⭐ ${profile.points} points<br>🏆 ${profile.stickers.length} stickers</div>
+          <div style="font-weight:800; color:${selected ? 'var(--accent)' : 'var(--muted)'};">${selected ? 'Selected for deletion' : 'Tap to select'}</div>
+        `;
+        card.addEventListener('click', () => {
+          playClickSound();
+          if (state.profileManagerSelection.includes(profile.id)) {
+            state.profileManagerSelection = state.profileManagerSelection.filter(id => id !== profile.id);
+          } else {
+            state.profileManagerSelection.push(profile.id);
+          }
+          renderProfileManager();
+        });
+        el.profileManagerGrid.appendChild(card);
+      });
+    }
+
+    function openProfileManager() {
+      clearAutoAdvance();
+      state.profileManagerSelection = [];
+      renderProfileManager();
+      el.profileManagerModalWrap.classList.add('active');
+      playClickSound();
+    }
+
+    function closeProfileManager() {
+      el.profileManagerModalWrap.classList.remove('active');
+      state.profileManagerSelection = [];
+    }
+
+    function deleteSelectedProfiles() {
+      if (!state.profileManagerSelection.length) {
+        alert('Select at least one profile first.');
+        return;
+      }
+      const selectedProfiles = state.profiles.filter(p => state.profileManagerSelection.includes(p.id));
+      const names = selectedProfiles.map(p => p.name).join(', ');
+      if (!confirm(`Delete these profiles: ${names}?`)) return;
+      state.profiles = state.profiles.filter(p => !state.profileManagerSelection.includes(p.id));
+      if (state.profileManagerSelection.includes(state.currentProfileId)) state.currentProfileId = null;
+      saveProfiles();
+      closeProfileManager();
+      renderProfiles();
+      if (state.currentProfileId && currentProfile()) {
+        renderHome();
+      } else {
+        setScreen('profiles');
+      }
     }
 
     function openAvatarPicker() {
@@ -1450,7 +1763,8 @@
 
     function makePreschoolAlphabetActivity() {
       const level = getSubjectLevel('alphabets');
-      const mode = level === 1 ? pickRandom(['letter','letter','sound']) : pickRandom(['letter','sound','first']);
+      const pool = level === 1 ? ['letter','letter','sound'] : ['letter','sound','first'];
+      const mode = antiRepeat('alphabetsRecentModes', pool);
       const items = [
         { letter: 'A', emoji: '🍎', word: 'APPLE' },
         { letter: 'B', emoji: '⚽', word: 'BALL' },
@@ -1465,7 +1779,7 @@
         const choices = uniqueChoices(item.letter, () => pickRandom(items).letter, 3).map(letter => ({ value: letter, label: letter, displayHtml: `<span style="font-size:2rem;">${letter}</span>` }));
         return {
           promptText: 'Which letter matches the picture?',
-          visualHtml: `<div><div style="font-size:4rem;">${item.emoji}</div><div style="font-size:1rem; color: var(--muted); margin-top:10px;">${item.word}</div></div>`,
+          visualHtml: `<div>${renderEmoji(item.emoji)}<div style="font-size:1rem; color: var(--muted); margin-top:10px;">${item.word}</div></div>`,
           subtitle: 'Pick the letter sound.',
           speakText: `${item.word}. Which letter does it match?`,
           choices,
@@ -1476,7 +1790,7 @@
       const choices = uniqueChoices(item.letter, () => pickRandom(items).letter, 3).map(letter => ({ value: letter, label: letter, displayHtml: `<span style="font-size:2rem;">${letter}</span>` }));
       return {
         promptText: `Which letter does ${item.word} start with?`,
-        visualHtml: `<div><div style="font-size:4rem;">${item.emoji}</div><div style="font-size:1rem; color: var(--muted); margin-top:10px;">${item.word}</div></div>`,
+        visualHtml: `<div>${renderEmoji(item.emoji)}<div style="font-size:1rem; color: var(--muted); margin-top:10px;">${item.word}</div></div>`,
         subtitle: 'Pick the first letter.',
         speakText: `Which letter does ${item.word} start with?`,
         choices,
@@ -1538,7 +1852,8 @@
 
     function makePreschoolNumbersActivity() {
       const level = getSubjectLevel('numbers');
-      const mode = level === 1 ? pickRandom(['recognition','recognition','count']) : pickRandom(['recognition','count','compare']);
+      const pool = level === 1 ? ['recognition','recognition','count'] : ['recognition','count','compare'];
+      const mode = antiRepeat('numbersRecentModes', pool);
       if (mode === 'recognition') return makePreschoolNumberRecognition();
       if (mode === 'count') return makePreschoolCountingQuestion();
       const left = rand(1, 8), right = rand(1, 8);
@@ -1580,7 +1895,8 @@
 
     function makePreschoolShapesActivity() {
       const level = getSubjectLevel('shapes');
-      const mode = level === 1 ? pickRandom(['shape','shape','real']) : pickRandom(['shape','real']);
+      const pool = level === 1 ? ['shape','shape','real'] : ['shape','real'];
+      const mode = antiRepeat('shapesRecentModes', pool);
       if (mode === 'shape') return makeShapesQuestion();
       const sets = [
         { prompt: 'Which object is a circle?', target: 'Circle', choices: [{ label: '🕒 Clock', value: '🕒 Clock' }, { label: '📘 Book', value: '📘 Book' }, { label: '🍕 Pizza Slice', value: '🍕 Pizza Slice' }], correct: '🕒 Clock' },
@@ -1627,7 +1943,8 @@
 
     function makePreschoolColorsActivity() {
       const level = getSubjectLevel('colors');
-      const mode = level === 1 ? pickRandom(['color','color','real']) : pickRandom(['color','real']);
+      const pool = level === 1 ? ['color','color','real'] : ['color','real'];
+      const mode = antiRepeat('colorsRecentModes', pool);
       if (mode === 'color') return makeColorsQuestion();
       const sets = [
         { target: 'Red', swatch: '#ef6b73', choices: [{ label: '🍎 Apple', value: '🍎 Apple' }, { label: '🍌 Banana', value: '🍌 Banana' }, { label: '🍃 Leaf', value: '🍃 Leaf' }], correct: '🍎 Apple' },
@@ -1650,66 +1967,96 @@
     function makeGrade1MathQuestion() {
       const level = getSubjectLevel('math');
       const pool = level === 1
-        ? ['add','add','subtract','missing','compare']
+        ? ['add','add','subtract','missing','compare','order']
         : level === 2
-          ? ['add','subtract','missing','compare','skip','build']
-          : ['add','subtract','missing','compare','skip','groups','build'];
-      const type = pickRandom(pool);
+          ? ['add','subtract','missing','compare','skip','build','order','order']
+          : ['add','subtract','missing','compare','skip','groups','build','order','order'];
+
+      // Anti-repetition
+      const recent = state.mathRecentModes;
+      const fresh = pool.filter(m => !recent.includes(m));
+      const type = pickRandom(fresh.length > 0 ? fresh : pool);
+      state.mathRecentModes.push(type);
+      if (state.mathRecentModes.length > 5) state.mathRecentModes.shift();
 
       if (type === 'add') {
-        const a = rand(1, 12), b = rand(1, 8), correct = a + b;
+        const maxA = level === 1 ? 5 : level === 2 ? 10 : 20;
+        const maxB = level === 1 ? 5 : level === 2 ? 10 : 15;
+        const a = rand(1, maxA), b = rand(1, maxB), correct = a + b;
         const choices = uniqueChoices(correct, () => Math.max(0, correct + rand(-3, 3)), 4).map(n => ({ value: n, label: n }));
-        return makeQ(`${a} + ${b} = ?`, 'Solve the addition question.', `${a} plus ${b}`, choices, correct);
+        return makeQ(`${a} + ${b} = ?`, 'Solve the addition.', `${a} plus ${b}`, choices, correct);
       }
       if (type === 'subtract') {
-        const a = rand(4, 18), b = rand(1, Math.min(9, a - 1)), correct = a - b;
+        const maxA = level === 1 ? 8 : level === 2 ? 15 : 25;
+        const a = rand(3, maxA), b = rand(1, Math.min(a - 1, level === 1 ? 5 : level === 2 ? 10 : 15)), correct = a - b;
         const choices = uniqueChoices(correct, () => Math.max(0, correct + rand(-3, 3)), 4).map(n => ({ value: n, label: n }));
-        return makeQ(`${a} − ${b} = ?`, 'Solve the subtraction question.', `${a} minus ${b}`, choices, correct);
+        return makeQ(`${a} − ${b} = ?`, 'Solve the subtraction.', `${a} minus ${b}`, choices, correct);
       }
       if (type === 'compare') {
-        const a = rand(1, 20), b = rand(1, 20);
+        const maxN = level === 1 ? 10 : level === 2 ? 20 : 50;
+        const a = rand(1, maxN), b = rand(1, maxN);
         const correct = a > b ? '>' : a < b ? '<' : '=';
-        const signs = ['>','<','='];
         return {
           promptText: `${a} ? ${b}`,
           visualHtml: `<div style="font-size:3.4rem; font-weight:900;">${a} ? ${b}</div>`,
           subtitle: 'Which sign belongs in the middle?',
-          speakText: `Which sign belongs in the middle? ${a} and ${b}`,
-          choices: shuffle(signs).map(s => ({ value: s, label: s, displayHtml: `<span style="font-size:2.2rem;">${s}</span>` })),
+          speakText: `Which sign goes in the middle? ${a} and ${b}`,
+          choices: shuffle(['>','<','=']).map(s => ({ value: s, label: s, displayHtml: `<span style="font-size:2.2rem;">${s}</span>` })),
           correctValue: correct,
           revealText: correct
         };
       }
       if (type === 'skip') {
-        const step = pickRandom([2,5,10]);
-        const start = step, second = step * 2, third = step * 3, correct = step * 4;
-        const choices = uniqueChoices(correct, () => Math.max(0, correct + pickRandom([-step, step, step * 2])), 4).map(n => ({ value: n, label: n }));
-        return makeQ(`${start}, ${second}, ${third}, ?`, `Keep skip counting by ${step}s.`, `Keep counting by ${step}s.`, choices, correct);
+        const stepOptions = level === 1 ? [2,5,10] : level === 2 ? [2,3,5,10] : [2,3,4,5,10,100];
+        const step = pickRandom(stepOptions);
+        const startMult = rand(1, level === 1 ? 3 : level === 2 ? 5 : 8);
+        const seq = [startMult, startMult+1, startMult+2, startMult+3, startMult+4].map(m => m * step);
+        const showCount = level === 1 ? 3 : level === 2 ? 4 : 4;
+        const shown = seq.slice(0, showCount);
+        const correct = seq[showCount];
+        const choices = uniqueChoices(correct, () => Math.max(0, correct + pickRandom([-step, step, step*2, -step*2])), 4).map(n => ({ value: n, label: n }));
+        return makeQ(`${shown.join(', ')}, ?`, `Keep skip counting by ${step}s.`, `Keep counting by ${step}s. What comes next?`, choices, correct);
       }
       if (type === 'groups') {
-        const group = pickRandom([2,3,4,5]);
-        const times = pickRandom([2,3,4]);
-        const correct = group * times;
+        const groupSize = pickRandom(level === 1 ? [2,3,4] : level === 2 ? [2,3,4,5] : [2,3,4,5,6,7]);
+        const times = pickRandom(level === 1 ? [2,3] : level === 2 ? [2,3,4] : [2,3,4,5,6]);
+        const correct = groupSize * times;
         const choices = uniqueChoices(correct, () => Math.max(0, correct + rand(-4, 4)), 4).map(n => ({ value: n, label: n }));
-        return makeQ(`${times} groups of ${group} = ?`, 'Count the groups.', `${times} groups of ${group}`, choices, correct);
+        const emoji = pickRandom(['🍎','⭐','🐸','🧁','🚗','🐟','🌸','🎈']);
+        const visual = Array.from({length: times}, () => Array(groupSize).fill(emoji).join('')).join('  ');
+        return {
+          promptText: `${times} groups of ${groupSize} = ?`,
+          visualHtml: `<div><div style="font-size:1.6rem; line-height:2; margin-bottom:8px;">${visual}</div><div style="font-size:2.2rem; font-weight:900;">${times} × ${groupSize} = ?</div></div>`,
+          subtitle: 'Count all the items.',
+          speakText: `${times} groups of ${groupSize}. How many altogether?`,
+          choices,
+          correctValue: correct,
+          revealText: String(correct)
+        };
       }
       if (type === 'build') {
-        const a = rand(2, 12), b = rand(1, 9), correct = String(a + b);
+        const maxA = level === 2 ? 12 : 20;
+        const a = rand(2, maxA), b = rand(1, 9), correct = String(a + b);
         const digits = correct.split('');
         const extras = level >= 3 ? [String(rand(0,9)), String(rand(0,9))] : [String(rand(0,9))];
-        const tiles = level >= 3 ? shuffle([...digits, ...extras]) : [...digits];
+        const tiles = shuffle([...digits, ...extras]);
         return {
           promptText: `${a} + ${b} = ?`,
           visualHtml: `<div style="font-size:3.4rem; font-weight:900;">${a} + ${b} = ?</div>`,
           subtitle: 'Build the answer using number tiles.',
-          speakText: `${a} plus ${b}`,
+          speakText: `${a} plus ${b} equals?`,
           interaction: 'builder',
           tiles,
           correctValue: correct,
           revealText: correct
         };
       }
-      const a = rand(1, 10), b = rand(1, 8), total = a + b;
+      if (type === 'order') {
+        return makeMathOrderQuestion(level);
+      }
+      // missing (default)
+      const maxN = level === 1 ? 8 : level === 2 ? 15 : 25;
+      const a = rand(1, maxN), b = rand(1, maxN - a), total = a + b;
       const missingFirst = Math.random() < 0.5;
       const correct = missingFirst ? a : b;
       const visual = missingFirst ? `? + ${b} = ${total}` : `${a} + ? = ${total}`;
@@ -1717,12 +2064,228 @@
       return makeQ(visual, 'Find the missing number.', 'Find the missing number.', choices, correct);
     }
 
+    function makeMathOrderQuestion(level) {
+      const count = level === 1 ? 3 : level === 2 ? 4 : 5;
+      const useSequence = Math.random() < 0.5;
+
+      if (useSequence) {
+        // Fill-the-gap sequence: returns standard MCQ, NOT order interaction
+        const step = pickRandom(level === 1 ? [1,2] : level === 2 ? [1,2,5] : [1,2,3,5,10]);
+        const start = rand(1, level === 1 ? 5 : level === 2 ? 10 : 15);
+        const fullSeq = Array.from({length: count + 1}, (_, i) => start + i * step);
+        const gapIdx = rand(1, count - 1);
+        const correct = fullSeq[gapIdx];
+        const display = fullSeq.slice(0, count + 1).map((n, i) => i === gapIdx ? '?' : String(n));
+        const choices = uniqueChoices(correct, () => Math.max(0, correct + pickRandom([-step, step, step*2, 1, -1])), 4).map(n => ({ value: n, label: n }));
+        return makeQ(display.join(' , '), 'Find the missing number in the sequence.', `What number is missing? ${display.join(', ')}`, choices, correct);
+      }
+
+      // Sort smallest to largest — uses order interaction
+      const maxN = level === 1 ? 9 : level === 2 ? 20 : 50;
+      let nums = [];
+      while (nums.length < count) {
+        const n = rand(1, maxN);
+        if (!nums.includes(n)) nums.push(n);
+      }
+      const sorted = [...nums].sort((a, b) => a - b);
+      const shuffled = shuffle([...nums]);
+      return {
+        promptText: 'Put in order: smallest to largest',
+        visualHtml: `<div style="font-size:1.3rem; font-weight:900; color:var(--muted);">Put in order: smallest → largest</div>`,
+        subtitle: 'Tap a number, then tap where it belongs.',
+        speakText: `Put these numbers in order from smallest to largest: ${shuffled.join(', ')}`,
+        interaction: 'order',
+        tiles: shuffled,
+        correctValue: sorted,
+        revealText: sorted.join(', ')
+      };
+    }
+
+    function renderOrderQuestion(q) {
+      const slots = q.correctValue; // sorted array
+      state.orderState = {
+        slots: slots.map(() => null),  // what's placed in each slot
+        tiles: q.tiles.map((v, i) => ({ id: `ot_${i}`, value: v, used: false })),
+        correctOrder: slots,
+        selectedTileId: null,
+        count: slots.length
+      };
+
+      const slotsEl = document.createElement('div');
+      slotsEl.className = 'order-slots';
+      slotsEl.id = 'order-slots';
+      slots.forEach((_, i) => {
+        const s = document.createElement('div');
+        s.className = 'order-slot';
+        s.dataset.slotIdx = i;
+        s.addEventListener('click', () => handleOrderSlotClick(i));
+        slotsEl.appendChild(s);
+      });
+
+      const tileGrid = document.createElement('div');
+      tileGrid.className = 'order-tile-grid';
+      tileGrid.id = 'order-tile-grid';
+
+      const actions = document.createElement('div');
+      actions.className = 'builder-actions';
+      actions.innerHTML = `
+        <button id="order-undo-btn" class="soft-btn subtle">↩️ Undo</button>
+        <button id="order-clear-btn" class="soft-btn subtle">🧹 Clear</button>
+        <button id="order-check-btn" class="soft-btn primary">✓ Check</button>
+      `;
+
+      el.answersGrid.appendChild(slotsEl);
+      el.answersGrid.appendChild(tileGrid);
+      el.answersGrid.appendChild(actions);
+
+      renderOrderState();
+
+      document.getElementById('order-undo-btn').addEventListener('click', orderUndo);
+      document.getElementById('order-clear-btn').addEventListener('click', orderClear);
+      document.getElementById('order-check-btn').addEventListener('click', orderCheck);
+    }
+
+    function renderOrderState() {
+      const os = state.orderState;
+      if (!os) return;
+
+      // Render slots
+      const slotsEl = document.getElementById('order-slots');
+      if (slotsEl) {
+        Array.from(slotsEl.children).forEach((s, i) => {
+          s.className = 'order-slot' + (os.slots[i] !== null ? ' filled' : '') + (os.selectedTileId && os.slots[i] === null ? ' target' : '');
+          s.textContent = os.slots[i] !== null ? os.slots[i] : '';
+        });
+      }
+
+      // Render tiles
+      const tileGrid = document.getElementById('order-tile-grid');
+      if (tileGrid) {
+        tileGrid.innerHTML = '';
+        os.tiles.forEach(tile => {
+          const btn = document.createElement('button');
+          btn.className = 'order-tile' + (tile.used ? ' used' : '') + (os.selectedTileId === tile.id ? ' selected' : '');
+          btn.textContent = tile.value;
+          btn.disabled = tile.used;
+          btn.addEventListener('click', () => handleOrderTileClick(tile.id));
+          tileGrid.appendChild(btn);
+        });
+      }
+    }
+
+    function handleOrderTileClick(tileId) {
+      if (state.answerLocked) return;
+      const os = state.orderState;
+      if (!os) return;
+      const tile = os.tiles.find(t => t.id === tileId);
+      if (!tile || tile.used) return;
+      playClickSound();
+      // If same tile tapped again — deselect
+      if (os.selectedTileId === tileId) {
+        os.selectedTileId = null;
+      } else {
+        os.selectedTileId = tileId;
+        // Auto-place into next empty slot
+        const nextEmpty = os.slots.findIndex(s => s === null);
+        if (nextEmpty !== -1) {
+          os.slots[nextEmpty] = tile.value;
+          if (!os.slotTileIds) os.slotTileIds = os.slots.map(() => null);
+          os.slotTileIds[nextEmpty] = tile.id;
+          tile.used = true;
+          os.selectedTileId = null;
+        }
+      }
+      renderOrderState();
+    }
+
+    function handleOrderSlotClick(idx) {
+      if (state.answerLocked) return;
+      const os = state.orderState;
+      if (!os) return;
+      // Tap a filled slot to remove it
+      if (os.slots[idx] !== null) {
+        playClickSound();
+        const val = os.slots[idx];
+        const tileId = os.slotTileIds ? os.slotTileIds[idx] : null;
+        os.slots[idx] = null;
+        if (os.slotTileIds) os.slotTileIds[idx] = null;
+        const tile = tileId
+          ? os.tiles.find(t => t.id === tileId)
+          : os.tiles.find(t => t.value === val && t.used);
+        if (tile) tile.used = false;
+        renderOrderState();
+      }
+    }
+
+    function orderUndo() {
+      const os = state.orderState;
+      if (!os) return;
+      playClickSound();
+      for (let i = os.slots.length - 1; i >= 0; i--) {
+        if (os.slots[i] !== null) {
+          const val = os.slots[i];
+          const tileId = os.slotTileIds ? os.slotTileIds[i] : null;
+          os.slots[i] = null;
+          if (os.slotTileIds) os.slotTileIds[i] = null;
+          const tile = tileId
+            ? os.tiles.find(t => t.id === tileId)
+            : os.tiles.find(t => t.value === val && t.used);
+          if (tile) tile.used = false;
+          break;
+        }
+      }
+      renderOrderState();
+    }
+
+    function orderClear() {
+      const os = state.orderState;
+      if (!os) return;
+      playClickSound();
+      os.slots = os.slots.map(() => null);
+      os.tiles.forEach(t => t.used = false);
+      os.selectedTileId = null;
+      renderOrderState();
+    }
+
+    function orderCheck() {
+      if (state.answerLocked) return;
+      const os = state.orderState;
+      if (!os) return;
+      playClickSound();
+      if (os.slots.some(s => s === null)) {
+        el.feedbackLine.textContent = 'Place all the numbers first.';
+        el.feedbackLine.className = 'feedback-line bad';
+        return;
+      }
+      const isCorrect = os.slots.every((v, i) => Number(v) === Number(os.correctOrder[i]));
+      if (isCorrect) {
+        state.answerLocked = true;
+        // Flash slots green
+        const slotsEl = document.getElementById('order-slots');
+        if (slotsEl) Array.from(slotsEl.children).forEach(s => s.className = 'order-slot correct-flash');
+        handleCorrectAnswer();
+      } else {
+        state.wrongAttempts++;
+        handleWrongAnswer();
+        if (state.wrongAttempts >= 2) {
+          // Reveal correct order in slots
+          const slotsEl = document.getElementById('order-slots');
+          if (slotsEl) {
+            Array.from(slotsEl.children).forEach((s, i) => {
+              s.textContent = os.correctOrder[i];
+              s.className = 'order-slot filled';
+            });
+          }
+        }
+      }
+    }
+
     function buildEnglishSpellingRecognition(set) {
       const wrongPool = WORD_BANK.filter(w => w.word !== set.word).map(w => w.word);
       const choices = uniqueChoices(set.word, () => pickRandom(wrongPool), 4).map(word => ({ value: word, label: word }));
       return {
         promptText: 'Pick the correct spelling',
-        visualHtml: `<div><div style="font-size:4rem;">${set.emoji}</div><div style="font-size:1rem; color: var(--muted); margin-top:10px;">Which spelling matches the picture?</div></div>`,
+        visualHtml: `<div>${renderEmoji(set.emoji)}<div style="font-size:1rem; color: var(--muted); margin-top:10px;">Which spelling matches the picture?</div></div>`,
         subtitle: 'Tap the correctly spelled word.',
         speakText: `Pick the correct spelling for ${set.word}`,
         choices,
@@ -1743,7 +2306,7 @@
       const blankWord = set.word.split('').map((ch, idx) => idx === blankIndex ? '_' : ch).join(' ');
       return {
         promptText: 'Choose the missing letter',
-        visualHtml: `<div><div style="font-size:4rem;">${set.emoji}</div><div style="font-size:2.2rem; font-weight:900; letter-spacing:0.22em; margin-top:12px;">${blankWord}</div></div>`,
+        visualHtml: `<div>${renderEmoji(set.emoji)}<div style="font-size:2.2rem; font-weight:900; letter-spacing:0.22em; margin-top:12px;">${blankWord}</div></div>`,
         subtitle: 'Pick the letter that completes the word.',
         speakText: `${set.hint}. Choose the missing letter in ${set.word}`,
         choices,
@@ -1768,7 +2331,7 @@
       const blankWord = set.word.split('').map((ch, idx) => indices.includes(idx) ? '_' : ch).join(' ');
       return {
         promptText: 'Choose the two missing letters',
-        visualHtml: `<div><div style="font-size:4rem;">${set.emoji}</div><div style="font-size:2.2rem; font-weight:900; letter-spacing:0.22em; margin-top:12px;">${blankWord}</div></div>`,
+        visualHtml: `<div>${renderEmoji(set.emoji)}<div style="font-size:2.2rem; font-weight:900; letter-spacing:0.22em; margin-top:12px;">${blankWord}</div></div>`,
         subtitle: 'Pick the two letters that complete the word.',
         speakText: `${set.hint}. Choose the two missing letters in ${set.word}`,
         choices,
@@ -1782,7 +2345,7 @@
       const choices = uniqueChoices(set.word, () => pickRandom(wrongPool), 4).map(word => ({ value: word, label: word }));
       return {
         promptText: 'Which word matches the picture?',
-        visualHtml: `<div><div style="font-size:4rem;">${set.emoji}</div></div>`,
+        visualHtml: `<div>${renderEmoji(set.emoji)}</div>`,
         subtitle: 'Pick the matching word.',
         speakText: `Which word matches the picture for ${set.word}?`,
         choices,
@@ -1800,7 +2363,7 @@
       }));
       return {
         promptText: 'Which letter does this word start with?',
-        visualHtml: `<div><div style="font-size:4rem;">${set.emoji}</div><div style="font-size:1rem; color:var(--muted); margin-top:10px;">Look at the picture and listen to the word</div></div>`,
+        visualHtml: `<div>${renderEmoji(set.emoji)}<div style="font-size:1rem; color:var(--muted); margin-top:10px;">Look at the picture and listen to the word</div></div>`,
         subtitle: 'Pick the beginning sound letter.',
         speakText: `Which letter does ${set.word} start with?`,
         choices,
@@ -1813,7 +2376,19 @@
       const rhymes = [
         { base: 'CAT', correct: 'HAT', wrong: ['DOG','SUN','TREE'] },
         { base: 'DOG', correct: 'LOG', wrong: ['FISH','STAR','CAKE'] },
-        { base: 'SUN', correct: 'FUN', wrong: ['MOON','GRASS','FROG'] }
+        { base: 'SUN', correct: 'FUN', wrong: ['MOON','GRASS','FROG'] },
+        { base: 'BED', correct: 'RED', wrong: ['CUP','FISH','BIRD'] },
+        { base: 'CAKE', correct: 'LAKE', wrong: ['STAR','DOG','RAIN'] },
+        { base: 'BEAR', correct: 'PEAR', wrong: ['DUCK','MOON','SNOW'] },
+        { base: 'FISH', correct: 'DISH', wrong: ['TREE','CAT','BELL'] },
+        { base: 'STAR', correct: 'CAR', wrong: ['MOON','EGG','FROG'] },
+        { base: 'RAIN', correct: 'TRAIN', wrong: ['SNOW','BIRD','DRUM'] },
+        { base: 'MOON', correct: 'SPOON', wrong: ['SUN','STAR','SNOW'] },
+        { base: 'FROG', correct: 'LOG', wrong: ['BIRD','EGG','CUP'] },
+        { base: 'SING', correct: 'RING', wrong: ['JUMP','DRUM','BELL'] },
+        { base: 'CLOCK', correct: 'ROCK', wrong: ['CHAIR','TABLE','BRUSH'] },
+        { base: 'SNAKE', correct: 'LAKE', wrong: ['CLOUD','TRAIN','PIZZA'] },
+        { base: 'BREAD', correct: 'HEAD', wrong: ['MILK','CORN','APPLE'] }
       ];
       const item = pickRandom(rhymes);
       const choices = shuffle([item.correct, ...item.wrong]).map(word => ({ value: word, label: word }));
@@ -1832,7 +2407,19 @@
       const items = [
         { sentence: 'I drink ___', spoken: 'Fill in the blank. I drink', visual: '🥛', correct: 'MILK', wrong: ['SHOE','TREE','BALL'] },
         { sentence: 'I sleep in a ___', spoken: 'Fill in the blank. I sleep in a', visual: '🛏️', correct: 'BED', wrong: ['FISH','SUN','CAKE'] },
-        { sentence: 'I wear a ___', spoken: 'Fill in the blank. I wear a', visual: '👕', correct: 'SHIRT', wrong: ['APPLE','CLOUD','MOON'] }
+        { sentence: 'I wear a ___ on my head', spoken: 'Fill in the blank. I wear a blank on my head', visual: '🎩', correct: 'HAT', wrong: ['APPLE','CLOUD','MOON'] },
+        { sentence: 'Birds can ___', spoken: 'Fill in the blank. Birds can', visual: '🐦', correct: 'FLY', wrong: ['SING','SWIM','JUMP'] },
+        { sentence: 'I eat ___ for breakfast', spoken: 'Fill in the blank. I eat blank for breakfast', visual: '🍞', correct: 'BREAD', wrong: ['FISH','DRUM','STAR'] },
+        { sentence: 'The ___ shines at night', spoken: 'Fill in the blank. The blank shines at night', visual: '🌙', correct: 'MOON', wrong: ['RAIN','TREE','BELL'] },
+        { sentence: 'A frog can ___', spoken: 'Fill in the blank. A frog can', visual: '🐸', correct: 'JUMP', wrong: ['FLY','BARK','ROAR'] },
+        { sentence: 'I read a ___', spoken: 'Fill in the blank. I read a', visual: '📖', correct: 'BOOK', wrong: ['POT','EGG','HAT'] },
+        { sentence: 'It is cold and ___ outside', spoken: 'Fill in the blank. It is cold and blank outside', visual: '❄️', correct: 'SNOWY', wrong: ['SUNNY','NOISY','HAPPY'] },
+        { sentence: 'A dog says ___', spoken: 'Fill in the blank. A dog says', visual: '🐶', correct: 'WOOF', wrong: ['MEOW','QUACK','MOO'] },
+        { sentence: 'I use a ___ to eat soup', spoken: 'Fill in the blank. I use a blank to eat soup', visual: '🥣', correct: 'SPOON', wrong: ['FORK','DRUM','BOOK'] },
+        { sentence: 'The ___ gives us light at day', spoken: 'Fill in the blank. The blank gives us light at day', visual: '☀️', correct: 'SUN', wrong: ['MOON','STAR','RAIN'] },
+        { sentence: 'A cow gives us ___', spoken: 'Fill in the blank. A cow gives us', visual: '🐄', correct: 'MILK', wrong: ['BREAD','HONEY','JUICE'] },
+        { sentence: 'I put on my ___ to go outside', spoken: 'Fill in the blank. I put on my blank to go outside', visual: '👟', correct: 'SHOES', wrong: ['BOOKS','CLOCK','DRUM'] },
+        { sentence: 'Fish live in the ___', spoken: 'Fill in the blank. Fish live in the', visual: '🐟', correct: 'WATER', wrong: ['CLOUD','BREAD','TRAIN'] }
       ];
       const item = pickRandom(items);
       const choices = shuffle([item.correct, ...item.wrong]).map(word => ({ value: word, label: word }));
@@ -1854,7 +2441,21 @@
         { word: 'APPLE', correct: 'Noun', hint: 'This is a naming word' },
         { word: 'JUMP', correct: 'Verb', hint: 'This is an action word' },
         { word: 'HAPPY', correct: 'Adjective', hint: 'This word describes someone' },
-        { word: 'MOTHER', correct: 'Noun', hint: 'This is a naming word' }
+        { word: 'MOTHER', correct: 'Noun', hint: 'This is a naming word' },
+        { word: 'SWIM', correct: 'Verb', hint: 'This is an action word' },
+        { word: 'LOUD', correct: 'Adjective', hint: 'This word describes a sound' },
+        { word: 'TABLE', correct: 'Noun', hint: 'This is a naming word' },
+        { word: 'EAT', correct: 'Verb', hint: 'This is an action word' },
+        { word: 'TINY', correct: 'Adjective', hint: 'This word describes a size' },
+        { word: 'CLOUD', correct: 'Noun', hint: 'This is a naming word' },
+        { word: 'SING', correct: 'Verb', hint: 'This is an action word' },
+        { word: 'COLD', correct: 'Adjective', hint: 'This word describes a temperature' },
+        { word: 'TIGER', correct: 'Noun', hint: 'This is a naming word' },
+        { word: 'SLEEP', correct: 'Verb', hint: 'This is an action word' },
+        { word: 'ROUND', correct: 'Adjective', hint: 'This word describes a shape' },
+        { word: 'TRAIN', correct: 'Noun', hint: 'This is a naming word' },
+        { word: 'CLIMB', correct: 'Verb', hint: 'This is an action word' },
+        { word: 'BRIGHT', correct: 'Adjective', hint: 'This word describes light' }
       ];
       const item = pickRandom(sets);
       return {
@@ -1889,8 +2490,8 @@
       tiles = shuffle([...tiles, ...wrongExtras]).slice(0, set.word.length + Math.min(2, wrongExtras.length) - (prefilled ? 1 : 0));
       return {
         promptText: 'Spell the word',
-        visualHtml: `<div><div style="font-size:4rem;">${set.emoji}</div><div style="font-size:1rem; color: var(--muted); margin-top:10px;">Use the letters below to spell the word</div></div>`,
-        correctVisualHtml: `<div><div style="font-size:4rem;">${set.emoji}</div><div style="font-size:2.2rem; font-weight:900; letter-spacing:0.15em; margin-top:12px;">${set.word}</div></div>`,
+        visualHtml: `<div>${renderEmoji(set.emoji)}<div style="font-size:1rem; color: var(--muted); margin-top:10px;">Use the letters below to spell the word</div></div>`,
+        correctVisualHtml: `<div>${renderEmoji(set.emoji)}<div style="font-size:2.2rem; font-weight:900; letter-spacing:0.15em; margin-top:12px;">${set.word}</div></div>`,
         subtitle: 'Tap letters, then press Check.',
         speakText: `${set.hint}. Spell ${set.word}`,
         interaction: 'builder',
@@ -1901,15 +2502,188 @@
       };
     }
 
+    function makeEnglishMatchPairs() {
+      const level = getSubjectLevel('english');
+      const available = WORD_BANK.filter(item => item.level <= Math.min(level + 1, 3));
+      const chosen = shuffle([...available]).slice(0, 6);
+      return {
+        promptText: 'Match each picture to its word!',
+        subtitle: 'Tap a picture, then tap its word.',
+        speakText: 'Match each picture to its word. Tap a picture, then tap the matching word.',
+        interaction: 'pairs',
+        pairs: chosen.map(item => ({ word: item.word, emoji: item.emoji })),
+        correctValue: '__pairs__',
+        revealText: 'all matched'
+      };
+    }
+
+    function renderPairsQuestion(q) {
+      const pairs = q.pairs;
+      // Build cards: 8 emoji cards + 8 word cards, shuffled independently
+      const emojiCards = shuffle(pairs.map((p, i) => ({ id: `emoji_${i}`, pairId: i, type: 'emoji', content: p.emoji, word: p.word })));
+      const wordCards  = shuffle(pairs.map((p, i) => ({ id: `word_${i}`,  pairId: i, type: 'word',  content: p.word,  word: p.word })));
+      const allCards   = shuffle([...emojiCards, ...wordCards]);
+
+      state.pairsState = {
+        cards: allCards,
+        flipped: [],      // ids of currently face-up unmatched cards
+        matched: new Set(),
+        totalPairs: pairs.length,
+        moves: 0,
+        locked: false
+      };
+
+      el.answersGrid.innerHTML = '';
+      el.answersGrid.className = 'pairs-grid';
+
+      const scoreEl = document.createElement('div');
+      scoreEl.className = 'pairs-score';
+      scoreEl.id = 'pairs-score';
+      scoreEl.textContent = `Matched: 0 / ${pairs.length}`;
+      el.answersGrid.before(scoreEl);
+
+      allCards.forEach(card => {
+        const btn = document.createElement('button');
+        btn.className = 'pair-card face-down';
+        btn.dataset.cardId = card.id;
+        btn.setAttribute('aria-label', 'Hidden card');
+        btn.addEventListener('click', () => handlePairCardClick(card.id));
+        el.answersGrid.appendChild(btn);
+      });
+    }
+
+    function handlePairCardClick(cardId) {
+      const ps = state.pairsState;
+      if (!ps || ps.locked || state.answerLocked) return;
+      if (ps.matched.has(cardId)) return;
+      if (ps.flipped.includes(cardId)) return;
+
+      playClickSound();
+      const card = ps.cards.find(c => c.id === cardId);
+      flipCard(cardId, card);
+      ps.flipped.push(cardId);
+
+      if (ps.flipped.length === 2) {
+        ps.locked = true;
+        ps.moves++;
+        const [idA, idB] = ps.flipped;
+        const cardA = ps.cards.find(c => c.id === idA);
+        const cardB = ps.cards.find(c => c.id === idB);
+        const isMatch = cardA.pairId === cardB.pairId && cardA.type !== cardB.type;
+
+        if (isMatch) {
+          ps.matched.add(idA);
+          ps.matched.add(idB);
+          markMatched(idA);
+          markMatched(idB);
+          ps.flipped = [];
+          ps.locked = false;
+          playCorrectChime();
+          burstConfetti(20);
+          updatePairsScore();
+
+          if (ps.matched.size === ps.totalPairs * 2) {
+            // All matched — count as correct answer
+            state.answerLocked = true;
+            el.feedbackLine.textContent = '🎉 All matched! Amazing!';
+            el.feedbackLine.className = 'feedback-line good';
+            speakQuestion('Amazing! You matched them all!');
+            handleCorrectAnswer();
+            const scoreEl = document.getElementById('pairs-score');
+            if (scoreEl) scoreEl.remove();
+          }
+        } else {
+          // No match — flash wrong, then flip back
+          flashWrong(idA);
+          flashWrong(idB);
+          setTimeout(() => {
+            unflipCard(idA);
+            unflipCard(idB);
+            ps.flipped = [];
+            ps.locked = false;
+          }, 900);
+        }
+      }
+    }
+
+    function flipCard(cardId, card) {
+      const btn = document.querySelector(`[data-card-id="${cardId}"]`);
+      if (!btn) return;
+      btn.classList.remove('face-down');
+      btn.classList.add('flipped');
+      if (card.type === 'emoji' && typeof card.content === 'string' && card.content.trim().startsWith('<svg')) {
+        btn.innerHTML = card.content;
+      } else {
+        btn.textContent = card.content;
+      }
+      btn.setAttribute('aria-label', card.word || card.content);
+    }
+
+    function unflipCard(cardId) {
+      const btn = document.querySelector(`[data-card-id="${cardId}"]`);
+      if (!btn) return;
+      btn.classList.remove('flipped', 'wrong-flash');
+      btn.classList.add('face-down');
+      btn.textContent = '';
+      btn.setAttribute('aria-label', 'Hidden card');
+    }
+
+    function markMatched(cardId) {
+      const btn = document.querySelector(`[data-card-id="${cardId}"]`);
+      if (!btn) return;
+      btn.classList.remove('flipped');
+      btn.classList.add('matched');
+    }
+
+    function flashWrong(cardId) {
+      const btn = document.querySelector(`[data-card-id="${cardId}"]`);
+      if (!btn) return;
+      btn.classList.add('wrong-flash');
+    }
+
+    function updatePairsScore() {
+      const ps = state.pairsState;
+      const scoreEl = document.getElementById('pairs-score');
+      if (scoreEl && ps) scoreEl.textContent = `Matched: ${ps.matched.size / 2} / ${ps.totalPairs}`;
+    }
+
+    function pickAntiRepeatWord(level) {
+      const available = WORD_BANK.filter(item => item.level <= Math.min(level + 1, 3));
+      const fresh = available.filter(item => !state.englishRecentWords.includes(item.word));
+      const pool = fresh.length >= 3 ? fresh : available;
+      const picked = pickRandom(pool);
+      state.englishRecentWords.push(picked.word);
+      if (state.englishRecentWords.length > 6) state.englishRecentWords.shift();
+      return picked;
+    }
+
+    function pickAntiRepeatMode(pool) {
+      const recent = state.englishRecentModes;
+      const fresh = pool.filter(m => !recent.includes(m));
+      const mode = pickRandom(fresh.length > 0 ? fresh : pool);
+      state.englishRecentModes.push(mode);
+      if (state.englishRecentModes.length > 5) state.englishRecentModes.shift();
+      return mode;
+    }
+
+    function antiRepeat(historyKey, pool) {
+      const recent = state[historyKey];
+      const fresh = pool.filter(m => !recent.includes(m));
+      const mode = pickRandom(fresh.length > 0 ? fresh : pool);
+      recent.push(mode);
+      if (recent.length > 5) recent.shift();
+      return mode;
+    }
+
     function makeEnglishActivity() {
       const level = getSubjectLevel('english');
       const modePool = [];
       modePool.push('builder', 'builder');
       if (level <= 1) modePool.push('recognition', 'missing', 'pictureWord', 'beginning');
-      else if (level === 2) modePool.push('recognition', 'missing', 'double', 'pictureWord', 'beginning', 'sentence');
-      else modePool.push('recognition', 'missing', 'double', 'pictureWord', 'beginning', 'rhyme', 'sentence', 'grammar');
-      const mode = pickRandom(modePool);
-      const set = pickRandom(WORD_BANK.filter(item => item.level <= Math.min(level + 1, 3)));
+      else if (level === 2) modePool.push('recognition', 'missing', 'double', 'pictureWord', 'beginning', 'sentence', 'pairs');
+      else modePool.push('recognition', 'missing', 'double', 'pictureWord', 'beginning', 'rhyme', 'sentence', 'grammar', 'pairs');
+      const mode = pickAntiRepeatMode(modePool);
+      const set = pickAntiRepeatWord(level);
       if (mode === 'builder') return makeEnglishBuildWordQuestion();
       if (mode === 'recognition') return buildEnglishSpellingRecognition(set);
       if (mode === 'missing') return buildEnglishMissingLetter(set);
@@ -1918,6 +2692,7 @@
       if (mode === 'beginning') return buildEnglishBeginning(set);
       if (mode === 'rhyme') return buildEnglishRhyme();
       if (mode === 'sentence') return buildEnglishSentence();
+      if (mode === 'pairs') return makeEnglishMatchPairs();
       return makeNounVerbAdjectiveQuestion();
     }
 
@@ -1991,21 +2766,21 @@
     function makeMoneyAmountQuestion() {
       const level = getSubjectLevel('money');
       const sets = [
-        { prompt: 'Which coins make 30 cents?', correct: '25¢ + 5¢', wrong: ['10¢ + 10¢', '5¢ + 5¢', '25¢ + 10¢'] },
-        { prompt: 'Which coins make 35 cents?', correct: '25¢ + 10¢', wrong: ['10¢ + 10¢ + 10¢', '25¢ + 5¢', '5¢ + 5¢ + 5¢'] },
-        { prompt: 'Which coins make 15 cents?', correct: '10¢ + 5¢', wrong: ['5¢ + 5¢', '25¢ + 5¢', '10¢ + 10¢'] },
-        { prompt: 'Which coins make 40 cents?', correct: '25¢ + 10¢ + 5¢', wrong: ['10¢ + 10¢ + 10¢', '25¢ + 25¢', '5¢ + 5¢ + 5¢ + 5¢'] },
-        { prompt: 'Which coins make $1.25?', correct: '$1 + 25¢', wrong: ['$1 + 10¢', '$2 + 25¢', '25¢ + 25¢'] },
-        { prompt: 'Which coins make $2.25?', correct: '$2 + 25¢', wrong: ['$1 + 25¢', '$2 + 10¢', '$1 + $1'] }
+        { target: '30¢', prompt: 'Make 30 cents.', correct: '25¢ + 5¢', wrong: ['10¢ + 10¢', '5¢ + 5¢', '25¢ + 10¢'] },
+        { target: '35¢', prompt: 'Make 35 cents.', correct: '25¢ + 10¢', wrong: ['10¢ + 10¢ + 10¢', '25¢ + 5¢', '5¢ + 5¢ + 5¢'] },
+        { target: '15¢', prompt: 'Make 15 cents.', correct: '10¢ + 5¢', wrong: ['5¢ + 5¢', '25¢ + 5¢', '10¢ + 10¢'] },
+        { target: '40¢', prompt: 'Make 40 cents.', correct: '25¢ + 10¢ + 5¢', wrong: ['10¢ + 10¢ + 10¢', '25¢ + 25¢', '5¢ + 5¢ + 5¢ + 5¢'] },
+        { target: '$1.25', prompt: 'Make $1.25.', correct: '$1 + 25¢', wrong: ['$1 + 10¢', '$2 + 25¢', '25¢ + 25¢'] },
+        { target: '$2.25', prompt: 'Make $2.25.', correct: '$2 + 25¢', wrong: ['$1 + 25¢', '$2 + 10¢', '$1 + $1'] }
       ];
       const available = level === 1 ? sets.slice(0, 3) : level === 2 ? sets.slice(0, 5) : sets;
       const set = pickRandom(available);
       const choices = shuffle([set.correct, ...set.wrong]).slice(0, 4).map(c => ({ value: c, label: c }));
       return {
         promptText: set.prompt,
-        visualHtml: `<div style="font-size:3rem;">🪙 🪙</div>`,
-        subtitle: 'Pick the right coin combination.',
-        speakText: set.prompt,
+        visualHtml: `<div><div style="font-size:1rem; color: var(--muted); margin-bottom:10px;">Pick coins that add up to</div><div style="font-size:2.8rem; font-weight:900; margin-bottom:10px;">${set.target}</div><div style="font-size:3rem;">🪙 🪙</div></div>`,
+        subtitle: `Pick the coin combination that makes ${set.target}.`,
+        speakText: `Pick the coin combination that makes ${set.target}.`,
         choices,
         correctValue: set.correct,
         revealText: set.correct
@@ -2033,9 +2808,15 @@
 
     function makeMoneyActivity() {
       const level = getSubjectLevel('money');
-      if (level >= 3 && Math.random() < 0.35) return makeCanYouBuyQuestion();
-      const recognitionWeight = level === 1 ? 0.7 : level === 2 ? 0.55 : 0.4;
-      return Math.random() < recognitionWeight ? makeMoneyRecognitionQuestion() : makeMoneyAmountQuestion();
+      const pool = level === 1
+        ? ['recognition','recognition','recognition']
+        : level === 2
+          ? ['recognition','recognition','amount']
+          : ['recognition','amount','amount','buy'];
+      const mode = antiRepeat('moneyRecentModes', pool);
+      if (mode === 'buy') return makeCanYouBuyQuestion();
+      if (mode === 'amount') return makeMoneyAmountQuestion();
+      return makeMoneyRecognitionQuestion();
     }
 
     function makePatternQuestion() {
@@ -2135,11 +2916,16 @@
 
     function makeLogicActivity() {
       const level = getSubjectLevel('logic');
-      const mode = level === 1 ? pickRandom(['pattern','odd','same']) : level === 2 ? pickRandom(['pattern','odd','same','group']) : pickRandom(['pattern','odd','same','group','story']);
+      const pool = level === 1
+        ? ['pattern','odd','same']
+        : level === 2
+          ? ['pattern','odd','same','group']
+          : ['pattern','odd','same','group','story'];
+      const mode = antiRepeat('logicRecentModes', pool);
       if (mode === 'pattern') return makePatternQuestion();
-      if (mode === 'same') return makeSameDifferentQuestion();
-      if (mode === 'group') return makeGroupBelongsQuestion();
-      if (mode === 'story') return makeStorySequenceQuestion();
+      if (mode === 'same')    return makeSameDifferentQuestion();
+      if (mode === 'group')   return makeGroupBelongsQuestion();
+      if (mode === 'story')   return makeStorySequenceQuestion();
       return makeOddOneOutQuestion();
     }
 
@@ -2235,6 +3021,9 @@
       el.createProfileBtn.addEventListener('click', createProfile);
       el.clearNameBtn.addEventListener('click', () => { el.profileName.value = ''; playClickSound(); });
       el.openStickersHomeBtn.addEventListener('click', openStickerCollection);
+      el.openProfileManagerBtn.addEventListener('click', openProfileManager);
+      el.deleteSelectedProfilesBtn.addEventListener('click', deleteSelectedProfiles);
+      el.closeProfileManagerBtn.addEventListener('click', closeProfileManager);
       el.changeAvatarBtn.addEventListener('click', openAvatarPicker);
       el.switchProfileBtn.addEventListener('click', () => { renderProfiles(); setScreen('profiles'); playClickSound(); });
       el.tabButtons.forEach(btn => btn.addEventListener('click', () => {
@@ -2269,6 +3058,7 @@
       el.settingsModalWrap.addEventListener('click', e => { if (e.target === el.settingsModalWrap) closeSettings(); });
       el.avatarModalWrap.addEventListener('click', e => { if (e.target === el.avatarModalWrap) closeAvatarPicker(); });
       el.collectionModalWrap.addEventListener('click', e => { if (e.target === el.collectionModalWrap) closeStickerCollection(); });
+      el.profileManagerModalWrap.addEventListener('click', e => { if (e.target === el.profileManagerModalWrap) closeProfileManager(); });
 
       ['mousedown','touchstart'].forEach(evt => el.settingsHoldBtn.addEventListener(evt, beginSettingsHold, { passive: true }));
       ['mouseup','mouseleave','touchend','touchcancel'].forEach(evt => el.settingsHoldBtn.addEventListener(evt, clearSettingsHold, { passive: true }));
