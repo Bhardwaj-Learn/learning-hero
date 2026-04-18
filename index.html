@@ -467,6 +467,45 @@
     }
     .order-tile.selected { border-color: #8a7cff; background: linear-gradient(180deg,#f0eeff,#e8e4ff); transform: scale(1.07); }
     .order-tile.used { opacity: 0.38; border-color: rgba(138,124,255,0.14); cursor: default; }
+    /* ── Tappable Swatches ── */
+    .tappable-swatches-wrap {
+      display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin: 12px 0 16px;
+    }
+    .tappable-swatch-btn {
+      width: 90px; height: 90px; border-radius: 22px; border: 4px solid transparent;
+      cursor: pointer; transition: transform 0.15s, border-color 0.15s;
+      box-shadow: 0 8px 18px rgba(74,66,106,0.14);
+    }
+    .tappable-swatch-btn:active { transform: scale(0.94); }
+    .tappable-swatch-btn.correct { border-color: #7dc98f; transform: scale(1.06); }
+    .tappable-swatch-btn.wrong { border-color: #e79b9b; opacity: 0.6; }
+
+    /* ── Compare Groups ── */
+    .compare-groups-wrap {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0 14px;
+    }
+    .compare-group-btn {
+      border: 3px solid transparent; border-radius: 22px; padding: 16px 10px;
+      background: linear-gradient(180deg, #ffffff, #f4f3ff);
+      box-shadow: 0 9px 20px rgba(73,65,104,0.10);
+      cursor: pointer; text-align: center; transition: border-color 0.15s, background 0.15s;
+      font-size: 2rem; line-height: 1.6; min-height: 110px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    }
+    .compare-group-btn:active { transform: scale(0.97); }
+    .compare-group-btn .group-label { font-size: 0.85rem; font-weight: 800; color: var(--muted); }
+    .compare-group-btn.correct { background: linear-gradient(180deg,#dff6e5,#bce8c8); border-color:#7dc98f; }
+    .compare-group-btn.wrong { background: linear-gradient(180deg,#fde8e8,#f7caca); border-color:#e79b9b; }
+    .compare-same-btn {
+      width: 100%; border-radius: 18px; border: none; cursor: pointer;
+      background: linear-gradient(180deg,#ffffff,#f2f1ff);
+      box-shadow: 0 8px 18px rgba(74,66,106,0.10);
+      font-size: 1.2rem; font-weight: 900; color: var(--text);
+      padding: 14px; margin-top: 4px; transition: border-color 0.15s;
+      border: 3px solid transparent;
+    }
+    .compare-same-btn.correct { background: linear-gradient(180deg,#dff6e5,#bce8c8); border-color:#7dc98f; }
+    .compare-same-btn.wrong { background: linear-gradient(180deg,#fde8e8,#f7caca); border-color:#e79b9b; }
   </style>
 </head>
 <body>
@@ -1243,6 +1282,16 @@
         return;
       }
 
+      if (q.interaction === 'compare-groups') {
+        renderCompareGroupsQuestion(q);
+        return;
+      }
+
+      if (q.interaction === 'tappable-swatches') {
+        renderTappableSwatchesQuestion(q);
+        return;
+      }
+
       q.choices.forEach(choice => {
         const btn = document.createElement('button');
         btn.className = 'answer-btn';
@@ -1485,8 +1534,9 @@
       }
       // order: already handled inside orderCheck; nothing extra to do here
       if (interaction === 'order') return;
-      // pairs: already handled inside handlePairCardClick; nothing extra to do here
       if (interaction === 'pairs') return;
+      if (interaction === 'compare-groups') return;
+      if (interaction === 'tappable-swatches') return;
       if (!state.currentQuestion.choices) return;
       Array.from(el.answersGrid.children).forEach((btn, idx) => {
         const choice = state.currentQuestion.choices[idx];
@@ -1742,214 +1792,420 @@
       return null;
     }
 
+    const AMBIGUOUS_LETTERS = new Set(['I','O','l']);
+    function renderLetter(letter, size = '4.2rem') {
+      const useSerif = AMBIGUOUS_LETTERS.has(letter);
+      const style = `font-size:${size}; font-weight:900; ${useSerif ? "font-family:'Georgia','Times New Roman',serif;" : ''}`;
+      return `<span style="${style}">${letter.toUpperCase()}</span>`;
+    }
+
+    // Confusable letter pairs — avoid as distractors
+    const CONFUSABLE_PAIRS = {
+      'B':['D','P'],'D':['B','P'],'P':['B','D','Q'],'Q':['O','P'],
+      'M':['N','W'],'N':['M','U'],'W':['M','V'],'U':['N','V'],
+      'I':['L','T'],'L':['I','T'],'T':['I','L'],
+      'C':['G','O'],'G':['C','O'],'O':['C','G','Q'],
+      'S':['Z'],'Z':['S'],'V':['W','U'],'F':['E'],'E':['F']
+    };
+
+    function safeLetterDistractors(correct, count) {
+      const avoid = new Set([correct, ...(CONFUSABLE_PAIRS[correct] || [])]);
+      const pool = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').filter(l => !avoid.has(l));
+      return uniqueChoices(correct, () => pickRandom(pool), count);
+    }
+
+    function letterDisplayHtml(letter) {
+      return `<span style="font-size:2rem;${AMBIGUOUS_LETTERS.has(letter) ? "font-family:'Georgia','Times New Roman',serif;" : ''}">${letter}</span>`;
+    }
+
     function makeAlphabetQuestion() {
       const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
       const correct = pickRandom(letters);
-      const choices = uniqueChoices(correct, () => pickRandom(letters), 3).map(letter => ({
-        value: letter,
-        label: letter,
-        displayHtml: `<span style="font-size:2rem;">${letter}</span>`
-      }));
+      const choices = safeLetterDistractors(correct, 3).map(l => ({ value:l, label:l, displayHtml: letterDisplayHtml(l) }));
       return {
         promptText: `Tap the letter ${correct}`,
-        visualHtml: `<div><div style="font-size:1.2rem; color: var(--muted); margin-bottom:10px;">Find this letter</div><div style="font-size:4.2rem; font-weight:900;">${correct}</div></div>`,
+        visualHtml: `<div><div style="font-size:1.2rem; color:var(--muted); margin-bottom:10px;">Find this letter</div>${renderLetter(correct)}</div>`,
         subtitle: 'Choose the matching uppercase letter.',
         speakText: `Tap the letter ${correct}`,
-        choices,
-        correctValue: correct,
-        revealText: correct
+        choices, correctValue: correct, revealText: correct
       };
     }
 
+    function makeAlphabetPictureToLetter(item) {
+      const choices = safeLetterDistractors(item.letter, 3).map(l => ({ value:l, label:l, displayHtml: letterDisplayHtml(l) }));
+      return {
+        promptText: `What letter does ${item.word} start with?`,
+        visualHtml: `<div>${renderEmoji(item.emoji)}<div style="font-size:1.1rem; font-weight:800; margin-top:10px; color:var(--muted);">${item.word}</div></div>`,
+        subtitle: 'Pick the starting letter.',
+        speakText: `${item.word}. What letter does it start with?`,
+        choices, correctValue: item.letter, revealText: item.letter
+      };
+    }
+
+    // ── Full alphabet bank ──
+    const ALPHA_ITEMS = [
+      { letter:'A', emoji:'🍎', word:'APPLE' }, { letter:'B', emoji:'🐝', word:'BEE' },
+      { letter:'C', emoji:'🐱', word:'CAT' },   { letter:'D', emoji:'🐶', word:'DOG' },
+      { letter:'E', emoji:'🥚', word:'EGG' },   { letter:'F', emoji:'🐸', word:'FROG' },
+      { letter:'G', emoji:'🍇', word:'GRAPE' },  { letter:'H', emoji:'🎩', word:'HAT' },
+      { letter:'I', emoji:'🍦', word:'ICE CREAM'}, { letter:'J', emoji:'🫙', word:'JAR' },
+      { letter:'K', emoji:'🪁', word:'KITE' },  { letter:'L', emoji:'🦁', word:'LION' },
+      { letter:'M', emoji:'🌙', word:'MOON' },  { letter:'N', emoji:'🪺', word:'NEST' },
+      { letter:'O', emoji:'🐙', word:'OCTOPUS'},{ letter:'P', emoji:'🐧', word:'PENGUIN'},
+      { letter:'Q', emoji:'👑', word:'QUEEN' }, { letter:'R', emoji:'🌈', word:'RAINBOW'},
+      { letter:'S', emoji:'☀️', word:'SUN' },   { letter:'T', emoji:'🐢', word:'TURTLE'},
+      { letter:'U', emoji:'☂️', word:'UMBRELLA'},{ letter:'V', emoji:'🎻', word:'VIOLIN'},
+      { letter:'W', emoji:'🐋', word:'WHALE' }, { letter:'X', emoji:'🎸', word:'XYLOPHONE'},
+      { letter:'Y', emoji:'🪀', word:'YOYO' },  { letter:'Z', emoji:'🦓', word:'ZEBRA' }
+    ];
+
     function makePreschoolAlphabetActivity() {
       const level = getSubjectLevel('alphabets');
-      const pool = level === 1 ? ['letter','letter','sound'] : ['letter','sound','first'];
+      const pool = level === 1
+        ? ['letter','letter','picture']
+        : level === 2
+          ? ['letter','picture','first','sequence']
+          : ['letter','picture','first','sequence','sequence','sound'];
       const mode = antiRepeat('alphabetsRecentModes', pool);
-      const items = [
-        { letter: 'A', emoji: '🍎', word: 'APPLE' },
-        { letter: 'B', emoji: '⚽', word: 'BALL' },
-        { letter: 'C', emoji: '🐱', word: 'CAT' },
-        { letter: 'D', emoji: '🐶', word: 'DOG' },
-        { letter: 'S', emoji: '☀️', word: 'SUN' },
-        { letter: 'T', emoji: '🌳', word: 'TREE' }
-      ];
-      const item = pickRandom(items);
-      if (mode === 'letter') return makeAlphabetQuestion();
+      const item = pickRandom(ALPHA_ITEMS);
+
+      if (mode === 'letter')   return makeAlphabetQuestion();
+      if (mode === 'picture')  return makeAlphabetPictureToLetter(item);
+      if (mode === 'sequence') return makeAlphabetSequenceQuestion(level);
+
       if (mode === 'sound') {
-        const choices = uniqueChoices(item.letter, () => pickRandom(items).letter, 3).map(letter => ({ value: letter, label: letter, displayHtml: `<span style="font-size:2rem;">${letter}</span>` }));
+        // Hear the word spoken, pick the letter
+        const choices = safeLetterDistractors(item.letter, 3).map(l => ({ value:l, label:l, displayHtml: letterDisplayHtml(l) }));
         return {
-          promptText: 'Which letter matches the picture?',
-          visualHtml: `<div>${renderEmoji(item.emoji)}<div style="font-size:1rem; color: var(--muted); margin-top:10px;">${item.word}</div></div>`,
-          subtitle: 'Pick the letter sound.',
-          speakText: `${item.word}. Which letter does it match?`,
-          choices,
-          correctValue: item.letter,
-          revealText: item.letter
+          promptText: 'Which letter do you hear at the start?',
+          visualHtml: `<div>${renderEmoji(item.emoji)}<div style="font-size:1.4rem; font-weight:900; margin-top:10px;">${item.word}</div></div>`,
+          subtitle: 'Listen and pick the first letter.',
+          speakText: `${item.word}. Which letter comes first?`,
+          choices, correctValue: item.letter, revealText: item.letter
         };
       }
-      const choices = uniqueChoices(item.letter, () => pickRandom(items).letter, 3).map(letter => ({ value: letter, label: letter, displayHtml: `<span style="font-size:2rem;">${letter}</span>` }));
+
+      // first mode
+      const choices = safeLetterDistractors(item.letter, 3).map(l => ({ value:l, label:l, displayHtml: letterDisplayHtml(l) }));
       return {
         promptText: `Which letter does ${item.word} start with?`,
-        visualHtml: `<div>${renderEmoji(item.emoji)}<div style="font-size:1rem; color: var(--muted); margin-top:10px;">${item.word}</div></div>`,
+        visualHtml: `<div>${renderEmoji(item.emoji)}<div style="font-size:1rem; color:var(--muted); margin-top:10px;">${item.word}</div></div>`,
         subtitle: 'Pick the first letter.',
         speakText: `Which letter does ${item.word} start with?`,
-        choices,
-        correctValue: item.letter,
-        revealText: item.letter
+        choices, correctValue: item.letter, revealText: item.letter
+      };
+    }
+
+    function makeAlphabetSequenceQuestion(level) {
+      const count = level <= 1 ? 3 : level === 2 ? 4 : 5;
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const maxStart = 26 - count;
+      const startIdx = rand(0, maxStart);
+      const seq = Array.from({length: count}, (_, i) => alphabet[startIdx + i]);
+      const useGap = Math.random() < 0.5 && count >= 3;
+
+      if (useGap) {
+        // Fill the gap: A _ C
+        const gapIdx = rand(1, count - 2);
+        const correct = seq[gapIdx];
+        const display = seq.map((l, i) => i === gapIdx ? '_' : l).join('  ');
+        const wrong = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').filter(l => !seq.includes(l));
+        const choices = uniqueChoices(correct, () => pickRandom(wrong), 3).map(l => ({ value: l, label: l, displayHtml: `<span style="font-size:2rem;">${l}</span>` }));
+        return {
+          promptText: 'Which letter is missing?',
+          visualHtml: `<div><div style="font-size:2.8rem; font-weight:900; letter-spacing:0.2em;">${display}</div><div style="font-size:1rem; color:var(--muted); margin-top:10px;">Find the missing letter in the sequence</div></div>`,
+          subtitle: 'Pick the missing letter.',
+          speakText: `Which letter is missing? ${display}`,
+          choices, correctValue: correct, revealText: correct
+        };
+      }
+
+      // Tap in order — scrambled set, MCQ "what comes next"
+      const shown = seq.slice(0, count - 1);
+      const correct = seq[count - 1];
+      const wrong = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').filter(l => !seq.includes(l));
+      const choices = uniqueChoices(correct, () => pickRandom(wrong), 3).map(l => ({ value: l, label: l, displayHtml: `<span style="font-size:2rem;">${l}</span>` }));
+      return {
+        promptText: 'What letter comes next?',
+        visualHtml: `<div><div style="font-size:2.8rem; font-weight:900; letter-spacing:0.25em;">${shown.join('  ')}  ?</div><div style="font-size:1rem; color:var(--muted); margin-top:10px;">What comes next in the alphabet?</div></div>`,
+        subtitle: 'Pick the next letter.',
+        speakText: `${shown.join(', ')}. What letter comes next?`,
+        choices, correctValue: correct, revealText: correct
       };
     }
 
     function makePreschoolNumberRecognition() {
+      const countEmojis = ['🍎','⭐','🐸','🧁','🚗','🐟','🌸','🐥','🍓','🎈'];
+      const emoji = pickRandom(countEmojis);
       const correct = String(rand(1, 10));
-      const groups = {
-        '1': '🍎',
-        '2': '🍎 🍎',
-        '3': '🍎 🍎 🍎',
-        '4': '🍎 🍎 🍎 🍎',
-        '5': '🍎 🍎 🍎 🍎 🍎',
-        '6': '🍎 🍎 🍎 🍎 🍎 🍎',
-        '7': '🍎 🍎 🍎 🍎 🍎 🍎 🍎',
-        '8': '🍎 🍎 🍎 🍎 🍎 🍎 🍎 🍎',
-        '9': '🍎 🍎 🍎 🍎 🍎 🍎 🍎 🍎 🍎',
-        '10': '🍎 🍎 🍎 🍎 🍎 🍎 🍎 🍎 🍎 🍎'
-      };
+      const row = Array.from({length: Number(correct)}, () => emoji).join(' ');
       const choices = uniqueChoices(correct, () => String(rand(1, 10)), 3).map(num => ({
-        value: num,
-        label: num,
-        displayHtml: `<span style="font-size:2rem;">${num}</span>`
+        value: num, label: num, displayHtml: `<span style="font-size:2rem;">${num}</span>`
       }));
       return {
         promptText: 'Tap the number that matches.',
-        visualHtml: `<div><div style="font-size:1.1rem; color: var(--muted); margin-bottom:10px;">How many apples do you see?</div><div style="font-size:2.2rem; line-height:1.5;">${groups[correct]}</div></div>`,
-        subtitle: 'Count the apples, then tap the number.',
-        speakText: 'Count the apples. Tap the matching number.',
-        choices,
-        correctValue: correct,
-        revealText: correct
+        visualHtml: `<div><div style="font-size:1.1rem; color:var(--muted); margin-bottom:10px;">How many do you see?</div><div style="font-size:2.2rem; line-height:1.6;">${row}</div></div>`,
+        subtitle: 'Count them, then tap the number.',
+        speakText: 'Count them. Tap the matching number.',
+        choices, correctValue: correct, revealText: correct
       };
     }
 
     function makePreschoolCountingQuestion() {
-      const count = rand(1, 8);
-      const emoji = pickRandom(['🍎','⭐','🐸','🧁','🚗','🐟']);
+      const count = rand(1, 10);
+      const emoji = pickRandom(['🍎','⭐','🐸','🧁','🚗','🐟','🌸','🐥','🍓','🎈','🦋','🐠']);
       const row = Array.from({ length: count }, () => emoji).join(' ');
       const correct = String(count);
-      const choices = uniqueChoices(correct, () => String(rand(1, 8)), 3).map(num => ({
-        value: num,
-        label: num,
-        displayHtml: `<span style="font-size:2rem;">${num}</span>`
+      const choices = uniqueChoices(correct, () => String(rand(1, 10)), 3).map(num => ({
+        value: num, label: num, displayHtml: `<span style="font-size:2rem;">${num}</span>`
       }));
       return {
         promptText: 'How many are there?',
-        visualHtml: `<div><div style="font-size:1.1rem; color: var(--muted); margin-bottom:10px;">Count them</div><div style="font-size:2.4rem; line-height:1.5;">${row}</div></div>`,
+        visualHtml: `<div><div style="font-size:1.1rem; color:var(--muted); margin-bottom:10px;">Count them</div><div style="font-size:2.4rem; line-height:1.6;">${row}</div></div>`,
         subtitle: 'Count the pictures and choose the number.',
         speakText: 'How many are there?',
-        choices,
-        correctValue: correct,
-        revealText: correct
+        choices, correctValue: correct, revealText: correct
+      };
+    }
+
+    function makeNumberBeforeAfter() {
+      const n = rand(2, 19);
+      const askBefore = Math.random() < 0.5;
+      const correct = askBefore ? n - 1 : n + 1;
+      const choices = uniqueChoices(correct, () => Math.max(1, correct + pickRandom([-2,-1,1,2])), 3).map(num => ({
+        value: num, label: num, displayHtml: `<span style="font-size:2rem;">${num}</span>`
+      }));
+      return {
+        promptText: askBefore ? `What comes before ${n}?` : `What comes after ${n}?`,
+        visualHtml: `<div><div style="font-size:3rem; font-weight:900;">${askBefore ? '? →' : '→ ?'} ${n}</div><div style="font-size:1rem; color:var(--muted); margin-top:10px;">${askBefore ? 'What number comes just before?' : 'What number comes just after?'}</div></div>`,
+        subtitle: askBefore ? 'Pick the number that comes before.' : 'Pick the number that comes after.',
+        speakText: askBefore ? `What number comes just before ${n}?` : `What number comes just after ${n}?`,
+        choices, correctValue: correct, revealText: String(correct)
+      };
+    }
+
+    function makeNumberOddEven() {
+      const n = rand(1, 20);
+      const correct = n % 2 === 0 ? 'Even' : 'Odd';
+      return {
+        promptText: `Is ${n} odd or even?`,
+        visualHtml: `<div><div style="font-size:4rem; font-weight:900;">${n}</div><div style="font-size:1rem; color:var(--muted); margin-top:8px;">Even numbers can be split into two equal groups</div></div>`,
+        subtitle: 'Pick odd or even.',
+        speakText: `Is ${n} odd or even?`,
+        choices: ['Odd','Even'].map(v => ({ value:v, label:v })),
+        correctValue: correct, revealText: correct
       };
     }
 
     function makePreschoolNumbersActivity() {
       const level = getSubjectLevel('numbers');
-      const pool = level === 1 ? ['recognition','recognition','count'] : ['recognition','count','compare'];
+      const pool = level === 1
+        ? ['recognition','recognition','count']
+        : level === 2
+          ? ['recognition','count','compare','beforeafter']
+          : ['recognition','count','compare','beforeafter','oddeven'];
       const mode = antiRepeat('numbersRecentModes', pool);
       if (mode === 'recognition') return makePreschoolNumberRecognition();
       if (mode === 'count') return makePreschoolCountingQuestion();
-      const left = rand(1, 8), right = rand(1, 8);
+      if (mode === 'beforeafter') return makeNumberBeforeAfter();
+      if (mode === 'oddeven') return makeNumberOddEven();
+      const left = rand(1, 10), right = rand(1, 10);
       const correct = left > right ? 'Left' : right > left ? 'Right' : 'Same';
-      const makeGroup = (n, emoji) => Array.from({ length: n }, () => emoji).join(' ');
+      const emojiSet = pickRandom(['🍎','⭐','🐸','🧁','🚗','🐟','🌸','🐥']);
+      const makeGroup = (n, e) => Array.from({length: n}, () => e).join(' ');
       return {
         promptText: 'Which group has more?',
-        visualHtml: `<div style="display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; max-width:720px; width:100%; margin:0 auto;"><div style="border-right:2px solid rgba(109,104,133,0.18); padding-right:14px;"><div style="font-size:1.2rem; font-weight:800; margin-bottom:10px;">⬅️ Left</div><div style="font-size:2rem; line-height:1.6;">${makeGroup(left, '🍎')}</div></div><div style="padding-left:14px;"><div style="font-size:1.2rem; font-weight:800; margin-bottom:10px;">Right ➡️</div><div style="font-size:2rem; line-height:1.6;">${makeGroup(right, '🍎')}</div></div></div>`,
-        subtitle: 'Pick the group with more.',
+        visualHtml: `<div style="font-size:1rem; font-weight:800; color:var(--muted); margin-bottom:4px;">Tap the group that has more</div>`,
+        subtitle: 'Tap directly on the bigger group — or tap Same.',
         speakText: 'Which group has more?',
+        interaction: 'compare-groups',
+        groupLeft: makeGroup(left, emojiSet),
+        groupRight: makeGroup(right, emojiSet),
         choices: ['Left','Right','Same'].map(v => ({ value: v, label: v })),
-        correctValue: correct,
-        revealText: correct
+        correctValue: correct, revealText: correct
       };
     }
 
     function makeShapesQuestion() {
       const shapes = [
-        { name: 'Circle', visual: '🟣' },
-        { name: 'Square', visual: '🟦' },
-        { name: 'Triangle', visual: '🔺' },
+        { name: 'Circle',    visual: '🟣' },
+        { name: 'Square',    visual: '🟦' },
+        { name: 'Triangle',  visual: '🔺' },
         { name: 'Rectangle', visual: '▬' },
-        { name: 'Oval', visual: '🥚' },
-        { name: 'Star', visual: '⭐' },
-        { name: 'Heart', visual: '❤️' }
+        { name: 'Oval',      visual: '🥚' },
+        { name: 'Star',      visual: '⭐' },
+        { name: 'Heart',     visual: '❤️' },
+        { name: 'Diamond',   visual: '🔷' },
+        { name: 'Pentagon',  visual: '⬠' },
+        { name: 'Hexagon',   visual: '⬡' }
       ];
-      const correct = pickRandom(shapes);
-      const choices = uniqueChoices(correct.name, () => pickRandom(shapes).name, 3).map(shapeName => ({ value: shapeName, label: shapeName }));
+      const level = getSubjectLevel('shapes');
+      const available = level === 1 ? shapes.slice(0,5) : level === 2 ? shapes.slice(0,7) : shapes;
+      const correct = pickRandom(available);
+      const choices = uniqueChoices(correct.name, () => pickRandom(available).name, 3).map(n => ({ value: n, label: n }));
       return {
         promptText: 'Which shape is this?',
-        visualHtml: `<div><div style="font-size:4.6rem;">${correct.visual}</div><div style="font-size:1rem; color: var(--muted); margin-top:8px;">Pick the matching shape name</div></div>`,
+        visualHtml: `<div><div style="font-size:4.6rem;">${correct.visual}</div><div style="font-size:1rem; color:var(--muted); margin-top:8px;">Pick the matching shape name</div></div>`,
         subtitle: 'Find the correct shape.',
-        speakText: 'Which shape is this?',
-        choices,
-        correctValue: correct.name,
-        revealText: correct.name
+        speakText: `Which shape is this?`,
+        choices, correctValue: correct.name, revealText: correct.name
       };
     }
 
     function makePreschoolShapesActivity() {
       const level = getSubjectLevel('shapes');
-      const pool = level === 1 ? ['shape','shape','real'] : ['shape','real'];
+      const pool = level === 1 ? ['shape','shape','real'] : level === 2 ? ['shape','real','count'] : ['shape','real','count','match'];
       const mode = antiRepeat('shapesRecentModes', pool);
       if (mode === 'shape') return makeShapesQuestion();
+      if (mode === 'count') {
+        const sided = [
+          { name:'Triangle', visual:'🔺', sides:3 },
+          { name:'Square',   visual:'🟦', sides:4 },
+          { name:'Rectangle',visual:'▬',  sides:4 },
+          { name:'Pentagon', visual:'⬠',  sides:5 },
+          { name:'Hexagon',  visual:'⬡',  sides:6 }
+        ];
+        const s = pickRandom(sided);
+        const choices = uniqueChoices(s.sides, () => pickRandom([3,4,5,6,8]), 4).map(n => ({ value: n, label: String(n) }));
+        return {
+          promptText: `How many sides does a ${s.name} have?`,
+          visualHtml: `<div><div style="font-size:4.6rem;">${s.visual}</div><div style="font-size:1.1rem; font-weight:800; margin-top:10px;">${s.name}</div></div>`,
+          subtitle: 'Count the sides and pick the number.',
+          speakText: `How many sides does a ${s.name} have?`,
+          choices, correctValue: s.sides, revealText: String(s.sides)
+        };
+      }
+      if (mode === 'match') {
+        // Show a shape, pick the one that matches from 4 options
+        const allShapes = [
+          {name:'Circle','🟣':'🟣',visual:'🟣'},{name:'Square',visual:'🟦'},
+          {name:'Triangle',visual:'🔺'},{name:'Heart',visual:'❤️'},
+          {name:'Star',visual:'⭐'},{name:'Diamond',visual:'🔷'},
+          {name:'Oval',visual:'🥚'},{name:'Rectangle',visual:'▬'}
+        ];
+        const target = pickRandom(allShapes);
+        const distractors = shuffle(allShapes.filter(s=>s.name!==target.name)).slice(0,3);
+        const choices = shuffle([target,...distractors]).map(s=>({
+          value:s.name, label:s.visual,
+          displayHtml:`<span style="font-size:2.2rem;">${s.visual}</span>`
+        }));
+        return {
+          promptText: `Find the matching shape`,
+          visualHtml: `<div><div style="font-size:5rem;">${target.visual}</div><div style="font-size:1rem; color:var(--muted); margin-top:8px;">Which one matches?</div></div>`,
+          subtitle: 'Pick the shape that looks the same.',
+          speakText: `Find the matching ${target.name}.`,
+          choices, correctValue: target.name, revealText: target.name
+        };
+      }
       const sets = [
-        { prompt: 'Which object is a circle?', target: 'Circle', choices: [{ label: '🕒 Clock', value: '🕒 Clock' }, { label: '📘 Book', value: '📘 Book' }, { label: '🍕 Pizza Slice', value: '🍕 Pizza Slice' }], correct: '🕒 Clock' },
-        { prompt: 'Which object is a rectangle?', target: 'Rectangle', choices: [{ label: '🪟 Window', value: '🪟 Window' }, { label: '⚽ Ball', value: '⚽ Ball' }, { label: '⭐ Star', value: '⭐ Star' }], correct: '🪟 Window' },
-        { prompt: 'Which object is a triangle?', target: 'Triangle', choices: [{ label: '🏠 Roof', value: '🏠 Roof' }, { label: '🥚 Egg', value: '🥚 Egg' }, { label: '🎁 Gift Box', value: '🎁 Gift Box' }], correct: '🏠 Roof' }
+        { prompt:'Which object is a circle?',    target:'Circle',    choices:[{label:'🕒 Clock',value:'🕒 Clock'},{label:'📘 Book',value:'📘 Book'},{label:'🍕 Pizza',value:'🍕 Pizza'}], correct:'🕒 Clock' },
+        { prompt:'Which object is a rectangle?', target:'Rectangle', choices:[{label:'🪟 Window',value:'🪟 Window'},{label:'⚽ Ball',value:'⚽ Ball'},{label:'⭐ Star',value:'⭐ Star'}], correct:'🪟 Window' },
+        { prompt:'Which object is a triangle?',  target:'Triangle',  choices:[{label:'🏔️ Mountain',value:'🏔️ Mountain'},{label:'🥚 Egg',value:'🥚 Egg'},{label:'🎁 Gift',value:'🎁 Gift'}], correct:'🏔️ Mountain' },
+        { prompt:'Which object is a square?',    target:'Square',    choices:[{label:'🎲 Dice',value:'🎲 Dice'},{label:'🌙 Moon',value:'🌙 Moon'},{label:'🍌 Banana',value:'🍌 Banana'}], correct:'🎲 Dice' },
+        { prompt:'Which object is a star?',      target:'Star',      choices:[{label:'⭐ Star sticker',value:'⭐ Star sticker'},{label:'🔵 Circle',value:'🔵 Circle'},{label:'🟥 Square',value:'🟥 Square'}], correct:'⭐ Star sticker' },
+        { prompt:'Which object is an oval?',     target:'Oval',      choices:[{label:'🥚 Egg',value:'🥚 Egg'},{label:'📦 Box',value:'📦 Box'},{label:'🔺 Triangle',value:'🔺 Triangle'}], correct:'🥚 Egg' },
+        { prompt:'Which object is a heart?',     target:'Heart',     choices:[{label:'❤️ Heart',value:'❤️ Heart'},{label:'🟦 Square',value:'🟦 Square'},{label:'🔶 Diamond',value:'🔶 Diamond'}], correct:'❤️ Heart' },
+        { prompt:'Which object is a diamond?',   target:'Diamond',   choices:[{label:'💎 Gem',value:'💎 Gem'},{label:'🟣 Circle',value:'🟣 Circle'},{label:'📘 Book',value:'📘 Book'}], correct:'💎 Gem' }
       ];
       const set = pickRandom(sets);
       const labels = shuffle(set.choices);
       return {
         promptText: set.prompt,
-        visualHtml: `<div><div style="font-size:3rem;">${labels.map(c => c.label.split(' ')[0]).join('   ')}</div><div style="font-size:1rem; color: var(--muted); margin-top:10px;">Find the ${set.target.toLowerCase()} shape in real life</div></div>`,
+        visualHtml: `<div><div style="font-size:3rem;">${labels.map(c => c.label.split(' ')[0]).join('   ')}</div><div style="font-size:1rem; color:var(--muted); margin-top:10px;">Find the ${set.target.toLowerCase()} shape in real life</div></div>`,
         subtitle: 'Pick one clear answer.',
         speakText: set.prompt,
         choices: labels.map(c => ({ value: c.value, label: c.label })),
-        correctValue: set.correct,
-        revealText: set.correct
+        correctValue: set.correct, revealText: set.correct
       };
     }
 
+    const ALL_COLORS = [
+      { name:'Red',    swatch:'#ef6b73' },
+      { name:'Blue',   swatch:'#66a7ff' },
+      { name:'Yellow', swatch:'#ffd95b' },
+      { name:'Green',  swatch:'#72c98a' },
+      { name:'Orange', swatch:'#ffb15e' },
+      { name:'Purple', swatch:'#ae8bff' },
+      { name:'Pink',   swatch:'#ff9bc9' },
+      { name:'Black',  swatch:'#2f2f38' },
+      { name:'White',  swatch:'#f8f8f8' },
+      { name:'Brown',  swatch:'#a0522d' },
+      { name:'Grey',   swatch:'#9e9e9e' }
+    ];
+
     function makeColorsQuestion() {
-      const colors = [
-        { name: 'Red', swatch: '#ef6b73' },
-        { name: 'Blue', swatch: '#66a7ff' },
-        { name: 'Yellow', swatch: '#ffd95b' },
-        { name: 'Green', swatch: '#72c98a' },
-        { name: 'Orange', swatch: '#ffb15e' },
-        { name: 'Purple', swatch: '#ae8bff' },
-        { name: 'Pink', swatch: '#ff9bc9' },
-        { name: 'Black', swatch: '#2f2f38' },
-        { name: 'White', swatch: '#ffffff' }
-      ];
-      const correct = pickRandom(colors);
-      const choices = uniqueChoices(correct.name, () => pickRandom(colors).name, 3).map(name => ({ value: name, label: name }));
+      const level = getSubjectLevel('colors');
+      const available = level === 1 ? ALL_COLORS.slice(0,6) : level === 2 ? ALL_COLORS.slice(0,9) : ALL_COLORS;
+      const correct = pickRandom(available);
+      const choices = uniqueChoices(correct.name, () => pickRandom(available).name, 3).map(name => ({ value: name, label: name }));
       return {
         promptText: 'What color is this?',
-        visualHtml: `<div><div style="width:110px; height:110px; border-radius:24px; background:${correct.swatch}; border:3px solid rgba(0,0,0,0.08); box-shadow: inset 0 0 0 2px rgba(255,255,255,0.55);"></div></div>`,
+        visualHtml: `<div><div style="width:110px; height:110px; border-radius:24px; background:${correct.swatch}; border:3px solid rgba(0,0,0,0.08); box-shadow: inset 0 0 0 2px rgba(255,255,255,0.55); margin:0 auto;"></div></div>`,
         subtitle: 'Pick the color name.',
         speakText: 'What color is this?',
-        choices,
-        correctValue: correct.name,
-        revealText: correct.name
+        choices, correctValue: correct.name, revealText: correct.name
+      };
+    }
+
+    function makeColorsSameQuestion() {
+      const level = getSubjectLevel('colors');
+      const available = level === 1 ? ALL_COLORS.slice(0,6) : ALL_COLORS;
+      const correct = pickRandom(available);
+      const oddOne = pickRandom(available.filter(c => c.name !== correct.name));
+      const oddIdx = rand(0, 2);
+      const swatches = [0,1,2].map(i => i === oddIdx ? oddOne : correct);
+      // Use tappable-swatches interaction — child taps directly on the odd swatch
+      return {
+        promptText: 'Which one is a different color?',
+        visualHtml: `<div style="font-size:1rem; font-weight:800; color:var(--muted); margin-bottom:6px;">Tap the one that is a different color</div>`,
+        subtitle: 'Two are the same — tap the odd one out.',
+        speakText: 'Which one is a different color? Two are the same.',
+        interaction: 'tappable-swatches',
+        swatches: swatches.map(s => ({ name: s.name, swatch: s.swatch })),
+        correctIndex: oddIdx,
+        choices: swatches.map((s,i) => ({ value: String(i), label: s.name })),
+        correctValue: String(oddIdx),
+        revealText: oddOne.name
+      };
+    }
+
+    function makeColorMixQuestion() {
+      const mixes = [
+        { a:'Red',   b:'Yellow', result:'Orange', swatchA:'#ef6b73', swatchB:'#ffd95b', swatchR:'#ffb15e' },
+        { a:'Blue',  b:'Yellow', result:'Green',  swatchA:'#66a7ff', swatchB:'#ffd95b', swatchR:'#72c98a' },
+        { a:'Red',   b:'Blue',   result:'Purple', swatchA:'#ef6b73', swatchB:'#66a7ff', swatchR:'#ae8bff' },
+        { a:'Red',   b:'White',  result:'Pink',   swatchA:'#ef6b73', swatchB:'#f8f8f8', swatchR:'#ff9bc9' },
+        { a:'Black', b:'White',  result:'Grey',   swatchA:'#2f2f38', swatchB:'#f8f8f8', swatchR:'#9e9e9e' }
+      ];
+      const mix = pickRandom(mixes);
+      const wrong = ALL_COLORS.filter(c => c.name !== mix.result && c.name !== mix.a && c.name !== mix.b).slice(0,3).map(c=>c.name);
+      const choices = uniqueChoices(mix.result, () => pickRandom(wrong), 3).map(n => ({ value: n, label: n }));
+      return {
+        promptText: `What color do you get?`,
+        visualHtml: `<div style="display:flex;align-items:center;justify-content:center;gap:12px;"><div style="width:70px;height:70px;border-radius:18px;background:${mix.swatchA};border:3px solid rgba(0,0,0,0.08);"></div><div style="font-size:1.8rem;font-weight:900;color:var(--muted);">+</div><div style="width:70px;height:70px;border-radius:18px;background:${mix.swatchB};border:3px solid rgba(0,0,0,0.08);"></div><div style="font-size:1.8rem;font-weight:900;color:var(--muted);">=</div><div style="width:70px;height:70px;border-radius:18px;background:rgba(200,200,200,0.3);border:3px dashed rgba(138,124,255,0.3);display:flex;align-items:center;justify-content:center;font-size:2rem;">?</div></div><div style="font-size:0.95rem;color:var(--muted);margin-top:10px;">${mix.a} + ${mix.b} = ?</div>`,
+        subtitle: `What color does ${mix.a} and ${mix.b} make?`,
+        speakText: `What color do you get when you mix ${mix.a} and ${mix.b}?`,
+        choices, correctValue: mix.result, revealText: mix.result
       };
     }
 
     function makePreschoolColorsActivity() {
       const level = getSubjectLevel('colors');
-      const pool = level === 1 ? ['color','color','real'] : ['color','real'];
+      const pool = level === 1 ? ['color','color','real'] : level === 2 ? ['color','real','same'] : ['color','real','same','mix'];
       const mode = antiRepeat('colorsRecentModes', pool);
       if (mode === 'color') return makeColorsQuestion();
+      if (mode === 'same') return makeColorsSameQuestion();
+      if (mode === 'mix') return makeColorMixQuestion();
       const sets = [
-        { target: 'Red', swatch: '#ef6b73', choices: [{ label: '🍎 Apple', value: '🍎 Apple' }, { label: '🍌 Banana', value: '🍌 Banana' }, { label: '🍃 Leaf', value: '🍃 Leaf' }], correct: '🍎 Apple' },
-        { target: 'Yellow', swatch: '#ffd95b', choices: [{ label: '☀️ Sun', value: '☀️ Sun' }, { label: '☁️ Cloud', value: '☁️ Cloud' }, { label: '🫐 Blueberry', value: '🫐 Blueberry' }], correct: '☀️ Sun' },
-        { target: 'Green', swatch: '#72c98a', choices: [{ label: '🍃 Leaf', value: '🍃 Leaf' }, { label: '❤️ Heart', value: '❤️ Heart' }, { label: '🌙 Moon', value: '🌙 Moon' }], correct: '🍃 Leaf' }
+        { target:'Red',    swatch:'#ef6b73', choices:[{label:'🍎 Apple',value:'🍎 Apple'},{label:'🍌 Banana',value:'🍌 Banana'},{label:'🍃 Leaf',value:'🍃 Leaf'}], correct:'🍎 Apple' },
+        { target:'Yellow', swatch:'#ffd95b', choices:[{label:'☀️ Sun',value:'☀️ Sun'},{label:'☁️ Cloud',value:'☁️ Cloud'},{label:'🫐 Blueberry',value:'🫐 Blueberry'}], correct:'☀️ Sun' },
+        { target:'Green',  swatch:'#72c98a', choices:[{label:'🍃 Leaf',value:'🍃 Leaf'},{label:'❤️ Heart',value:'❤️ Heart'},{label:'🌙 Moon',value:'🌙 Moon'}], correct:'🍃 Leaf' },
+        { target:'Blue',   swatch:'#66a7ff', choices:[{label:'🌊 Ocean',value:'🌊 Ocean'},{label:'🍎 Apple',value:'🍎 Apple'},{label:'🌿 Grass',value:'🌿 Grass'}], correct:'🌊 Ocean' },
+        { target:'Orange', swatch:'#ffb15e', choices:[{label:'🎃 Pumpkin',value:'🎃 Pumpkin'},{label:'🍇 Grapes',value:'🍇 Grapes'},{label:'🐘 Elephant',value:'🐘 Elephant'}], correct:'🎃 Pumpkin' },
+        { target:'Purple', swatch:'#ae8bff', choices:[{label:'🍇 Grapes',value:'🍇 Grapes'},{label:'🍋 Lemon',value:'🍋 Lemon'},{label:'🐮 Cow',value:'🐮 Cow'}], correct:'🍇 Grapes' },
+        { target:'Pink',   swatch:'#ff9bc9', choices:[{label:'🌸 Blossom',value:'🌸 Blossom'},{label:'🐸 Frog',value:'🐸 Frog'},{label:'☀️ Sun',value:'☀️ Sun'}], correct:'🌸 Blossom' },
+        { target:'Brown',  swatch:'#a0522d', choices:[{label:'🐻 Bear',value:'🐻 Bear'},{label:'🐧 Penguin',value:'🐧 Penguin'},{label:'🦋 Butterfly',value:'🦋 Butterfly'}], correct:'🐻 Bear' },
+        { target:'Black',  swatch:'#2f2f38', choices:[{label:'🐦‍⬛ Crow',value:'🐦‍⬛ Crow'},{label:'🐇 Rabbit',value:'🐇 Rabbit'},{label:'🦊 Fox',value:'🦊 Fox'}], correct:'🐦‍⬛ Crow' }
       ];
       const set = pickRandom(sets);
       const labels = shuffle(set.choices);
@@ -2099,6 +2355,95 @@
         correctValue: sorted,
         revealText: sorted.join(', ')
       };
+    }
+
+    function renderTappableSwatchesQuestion(q) {
+      el.answersGrid.innerHTML = '';
+      el.answersGrid.className = 'answers-grid preschool';
+      const wrap = document.createElement('div');
+      wrap.className = 'tappable-swatches-wrap';
+      q.swatches.forEach((s, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'tappable-swatch-btn';
+        btn.style.background = s.swatch;
+        btn.setAttribute('aria-label', s.name);
+        btn.addEventListener('click', () => {
+          if (state.answerLocked) return;
+          const isCorrect = String(i) === q.correctValue;
+          state.answerLocked = true;
+          btn.classList.add(isCorrect ? 'correct' : 'wrong');
+          // highlight correct if wrong
+          if (!isCorrect) {
+            Array.from(wrap.children).forEach((b, j) => {
+              if (String(j) === q.correctValue) b.classList.add('correct');
+            });
+          }
+          if (isCorrect) handleCorrectAnswer();
+          else { state.wrongAttempts = 2; handleWrongAnswer(); }
+        });
+        wrap.appendChild(btn);
+      });
+      el.answersGrid.appendChild(wrap);
+    }
+
+    function renderCompareGroupsQuestion(q) {
+      el.answersGrid.innerHTML = '';
+      el.answersGrid.className = 'answers-grid preschool';
+
+      const wrap = document.createElement('div');
+      wrap.className = 'compare-groups-wrap';
+
+      const makeGroupBtn = (label, groupHtml, value) => {
+        const btn = document.createElement('button');
+        btn.className = 'compare-group-btn';
+        btn.innerHTML = `<div>${groupHtml}</div><div class="group-label">${label}</div>`;
+        btn.addEventListener('click', () => {
+          if (state.answerLocked) return;
+          const isCorrect = value === q.correctValue;
+          state.answerLocked = true;
+          btn.classList.add(isCorrect ? 'correct' : 'wrong');
+          if (isCorrect) {
+            handleCorrectAnswer();
+          } else {
+            state.wrongAttempts = 2; // force reveal
+            handleWrongAnswer();
+            // highlight correct group
+            setTimeout(() => {
+              const allBtns = wrap.querySelectorAll('.compare-group-btn');
+              allBtns.forEach(b => { if (b.dataset.value === q.correctValue) b.classList.add('correct'); });
+              if (q.correctValue === 'Same') sameBtn.classList.add('correct');
+            }, 100);
+          }
+        });
+        btn.dataset.value = value;
+        return btn;
+      };
+
+      wrap.appendChild(makeGroupBtn('⬅️ This group', q.groupLeft, 'Left'));
+      wrap.appendChild(makeGroupBtn('This group ➡️', q.groupRight, 'Right'));
+      el.answersGrid.appendChild(wrap);
+
+      const sameBtn = document.createElement('button');
+      sameBtn.className = 'compare-same-btn';
+      sameBtn.textContent = 'They look the same';
+      sameBtn.addEventListener('click', () => {
+        if (state.answerLocked) return;
+        const isCorrect = 'Same' === q.correctValue;
+        state.answerLocked = true;
+        sameBtn.classList.add(isCorrect ? 'correct' : 'wrong');
+        if (isCorrect) {
+          handleCorrectAnswer();
+        } else {
+          state.wrongAttempts = 2;
+          handleWrongAnswer();
+          setTimeout(() => {
+            wrap.querySelectorAll('.compare-group-btn').forEach(b => {
+              if (b.dataset.value === q.correctValue) b.classList.add('correct');
+            });
+          }, 100);
+        }
+      });
+      el.answersGrid.appendChild(sameBtn);
     }
 
     function renderOrderQuestion(q) {
@@ -2766,122 +3111,213 @@
     function makeMoneyAmountQuestion() {
       const level = getSubjectLevel('money');
       const sets = [
-        { target: '30¢', prompt: 'Make 30 cents.', correct: '25¢ + 5¢', wrong: ['10¢ + 10¢', '5¢ + 5¢', '25¢ + 10¢'] },
-        { target: '35¢', prompt: 'Make 35 cents.', correct: '25¢ + 10¢', wrong: ['10¢ + 10¢ + 10¢', '25¢ + 5¢', '5¢ + 5¢ + 5¢'] },
-        { target: '15¢', prompt: 'Make 15 cents.', correct: '10¢ + 5¢', wrong: ['5¢ + 5¢', '25¢ + 5¢', '10¢ + 10¢'] },
-        { target: '40¢', prompt: 'Make 40 cents.', correct: '25¢ + 10¢ + 5¢', wrong: ['10¢ + 10¢ + 10¢', '25¢ + 25¢', '5¢ + 5¢ + 5¢ + 5¢'] },
-        { target: '$1.25', prompt: 'Make $1.25.', correct: '$1 + 25¢', wrong: ['$1 + 10¢', '$2 + 25¢', '25¢ + 25¢'] },
-        { target: '$2.25', prompt: 'Make $2.25.', correct: '$2 + 25¢', wrong: ['$1 + 25¢', '$2 + 10¢', '$1 + $1'] }
+        // Level 1 — simple two-coin combos
+        { target:'10¢',  prompt:'Make 10 cents.',  correct:'5¢ + 5¢',           wrong:['10¢ + 5¢','25¢ + 5¢','5¢ + 5¢ + 5¢'] },
+        { target:'15¢',  prompt:'Make 15 cents.',  correct:'10¢ + 5¢',          wrong:['5¢ + 5¢','25¢ + 5¢','10¢ + 10¢'] },
+        { target:'20¢',  prompt:'Make 20 cents.',  correct:'10¢ + 10¢',         wrong:['5¢ + 5¢','25¢ + 5¢','10¢ + 5¢'] },
+        { target:'25¢',  prompt:'Make 25 cents.',  correct:'10¢ + 10¢ + 5¢',   wrong:['10¢ + 5¢','25¢ + 10¢','5¢ + 5¢ + 5¢'] },
+        { target:'30¢',  prompt:'Make 30 cents.',  correct:'25¢ + 5¢',          wrong:['10¢ + 10¢','5¢ + 5¢','25¢ + 10¢'] },
+        { target:'35¢',  prompt:'Make 35 cents.',  correct:'25¢ + 10¢',         wrong:['10¢ + 10¢ + 10¢','25¢ + 5¢','5¢ + 5¢ + 5¢'] },
+        // Level 2 — three coins, dollar intro
+        { target:'40¢',  prompt:'Make 40 cents.',  correct:'25¢ + 10¢ + 5¢',   wrong:['10¢ + 10¢ + 10¢','25¢ + 25¢','5¢ + 5¢ + 5¢ + 5¢'] },
+        { target:'50¢',  prompt:'Make 50 cents.',  correct:'25¢ + 25¢',         wrong:['10¢ + 10¢ + 10¢','25¢ + 10¢','5¢ + 5¢ + 5¢'] },
+        { target:'60¢',  prompt:'Make 60 cents.',  correct:'25¢ + 25¢ + 10¢',  wrong:['25¢ + 25¢ + 5¢','10¢ + 10¢ + 10¢','25¢ + 10¢ + 5¢'] },
+        { target:'75¢',  prompt:'Make 75 cents.',  correct:'25¢ + 25¢ + 25¢',  wrong:['25¢ + 25¢ + 10¢','25¢ + 10¢ + 5¢','10¢ + 10¢ + 10¢'] },
+        { target:'$1.00',prompt:'Make one dollar.',correct:'$1',                wrong:['25¢ + 25¢','$2','10¢ + 10¢ + 10¢'] },
+        { target:'$1.25',prompt:'Make $1.25.',     correct:'$1 + 25¢',         wrong:['$1 + 10¢','$2 + 25¢','25¢ + 25¢'] },
+        // Level 3 — loonie/toonie combos
+        { target:'$1.35',prompt:'Make $1.35.',     correct:'$1 + 25¢ + 10¢',   wrong:['$1 + 25¢','$1 + 10¢ + 10¢','$2 + 25¢'] },
+        { target:'$1.50',prompt:'Make $1.50.',     correct:'$1 + 25¢ + 25¢',   wrong:['$1 + 25¢','$2 + 25¢','25¢ + 25¢ + 25¢'] },
+        { target:'$2.00',prompt:'Make two dollars.',correct:'$2',              wrong:['$1 + 25¢','$1 + $1','25¢ + 25¢ + 25¢'] },
+        { target:'$2.25',prompt:'Make $2.25.',     correct:'$2 + 25¢',         wrong:['$1 + 25¢','$2 + 10¢','$1 + $1'] },
+        { target:'$2.50',prompt:'Make $2.50.',     correct:'$2 + 25¢ + 25¢',   wrong:['$2 + 25¢','$1 + $1 + 25¢','$2 + 10¢ + 10¢'] },
+        { target:'$3.00',prompt:'Make three dollars.',correct:'$2 + $1',       wrong:['$2 + 25¢','$2 + 25¢ + 25¢','$1 + $1'] }
       ];
-      const available = level === 1 ? sets.slice(0, 3) : level === 2 ? sets.slice(0, 5) : sets;
+      const available = level === 1 ? sets.slice(0,6) : level === 2 ? sets.slice(0,12) : sets;
       const set = pickRandom(available);
-      const choices = shuffle([set.correct, ...set.wrong]).slice(0, 4).map(c => ({ value: c, label: c }));
+      const choices = shuffle([set.correct, ...set.wrong]).slice(0,4).map(c => ({ value: c, label: c }));
       return {
         promptText: set.prompt,
-        visualHtml: `<div><div style="font-size:1rem; color: var(--muted); margin-bottom:10px;">Pick coins that add up to</div><div style="font-size:2.8rem; font-weight:900; margin-bottom:10px;">${set.target}</div><div style="font-size:3rem;">🪙 🪙</div></div>`,
-        subtitle: `Pick the coin combination that makes ${set.target}.`,
+        visualHtml: `<div><div style="font-size:1rem; color:var(--muted); margin-bottom:10px;">Pick coins that add up to</div><div style="font-size:2.8rem; font-weight:900; margin-bottom:10px;">${set.target}</div><div style="font-size:3rem;">🪙 🪙</div></div>`,
+        subtitle: `Pick the combination that makes ${set.target}.`,
         speakText: `Pick the coin combination that makes ${set.target}.`,
-        choices,
-        correctValue: set.correct,
-        revealText: set.correct
+        choices, correctValue: set.correct, revealText: set.correct
       };
     }
 
     function makeCanYouBuyQuestion() {
+      const level = getSubjectLevel('money');
       const sets = [
-        { item:'🍎 Apple', price:'40¢', wallet:'25¢ + 10¢ + 5¢', correct:'Yes' },
-        { item:'🧃 Juice', price:'50¢', wallet:'25¢ + 10¢ + 10¢', correct:'No' },
-        { item:'🧸 Toy', price:'$1.25', wallet:'$1 + 25¢', correct:'Yes' },
-        { item:'🍪 Cookie', price:'35¢', wallet:'10¢ + 10¢ + 10¢', correct:'No' }
+        // Level 1 — simple yes/no
+        { item:'🍎 Apple',   price:'30¢', wallet:'25¢ + 10¢',       correct:'Yes', level:1 },
+        { item:'🍪 Cookie',  price:'35¢', wallet:'10¢ + 10¢ + 10¢', correct:'No',  level:1 },
+        { item:'🧃 Juice',   price:'50¢', wallet:'25¢ + 25¢',       correct:'Yes', level:1 },
+        { item:'🍬 Candy',   price:'20¢', wallet:'10¢ + 5¢',        correct:'No',  level:1 },
+        // Level 2
+        { item:'🧸 Toy',     price:'$1.25', wallet:'$1 + 25¢',      correct:'Yes', level:2 },
+        { item:'🎈 Balloon', price:'75¢',   wallet:'25¢ + 25¢',     correct:'No',  level:2 },
+        { item:'🍦 Ice cream',price:'$1.00',wallet:'$1',            correct:'Yes', level:2 },
+        { item:'🎁 Gift',    price:'$1.50', wallet:'$1 + 25¢',      correct:'No',  level:2 },
+        { item:'📚 Book',    price:'$2.00', wallet:'$2',            correct:'Yes', level:2 },
+        // Level 3
+        { item:'🎮 Game',    price:'$2.50', wallet:'$2 + 25¢',      correct:'No',  level:3 },
+        { item:'🍕 Pizza',   price:'$3.00', wallet:'$2 + $1',       correct:'Yes', level:3 },
+        { item:'🚀 Rocket toy',price:'$2.25',wallet:'$2 + 25¢',    correct:'Yes', level:3 }
       ];
-      const set = pickRandom(sets);
+      const available = sets.filter(s => s.level <= level);
+      const set = pickRandom(available);
       return {
         promptText: 'Can you buy this?',
-        visualHtml: `<div><div style="font-size:3.5rem;">${set.item.split(' ')[0]}</div><div style="font-size:1.2rem; margin-top:10px;">${set.item}</div><div style="margin-top:8px; color:var(--muted);">Price: ${set.price}</div><div style="margin-top:8px; color:var(--muted);">You have: ${set.wallet}</div></div>`,
+        visualHtml: `<div><div style="font-size:3.5rem;">${set.item.split(' ')[0]}</div><div style="font-size:1.2rem; margin-top:10px;">${set.item}</div><div style="margin-top:8px; color:var(--muted);">Price: <strong>${set.price}</strong></div><div style="margin-top:8px; color:var(--muted);">You have: <strong>${set.wallet}</strong></div></div>`,
         subtitle: 'Answer yes or no.',
         speakText: `Can you buy this? Price ${set.price}. You have ${set.wallet}.`,
         choices: ['Yes','No'].map(v => ({ value: v, label: v })),
-        correctValue: set.correct,
-        revealText: set.correct
+        correctValue: set.correct, revealText: set.correct
+      };
+    }
+
+    function makeMoneyCompareQuestion() {
+      const coins = [
+        { name:'nickel',  value:5,   label:'5¢',  color:'#c8c8c8' },
+        { name:'dime',    value:10,  label:'10¢', color:'#b8b8b8' },
+        { name:'quarter', value:25,  label:'25¢', color:'#d0d0d0' },
+        { name:'loonie',  value:100, label:'$1',  color:'#d4a843' },
+        { name:'toonie',  value:200, label:'$2',  color:'#c8973a' }
+      ];
+      const level = getSubjectLevel('money');
+      const available = level <= 2 ? coins.slice(0,3) : coins;
+      const [a, b] = shuffle([...available]).slice(0,2);
+      const correct = a.value > b.value ? capitalize(a.name) : capitalize(b.name);
+      const coinCircle = (coin) => `<div style="width:90px;height:90px;border-radius:50%;background:${coin.color};display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:900;color:#3b3552;border:3px solid rgba(0,0,0,0.12);box-shadow:0 4px 12px rgba(0,0,0,0.15);">${coin.label}</div>`;
+      return {
+        promptText: 'Which coin is worth more?',
+        visualHtml: `<div style="display:flex;justify-content:center;gap:28px;align-items:center;">${coinCircle(a)}<div style="font-size:1.8rem;font-weight:900;color:var(--muted);">vs</div>${coinCircle(b)}</div><div style="display:flex;justify-content:center;gap:80px;margin-top:8px;font-size:0.95rem;font-weight:800;color:var(--muted);"><span>${capitalize(a.name)}</span><span>${capitalize(b.name)}</span></div>`,
+        subtitle: 'Pick the coin worth more.',
+        speakText: `Which is worth more — a ${a.name} or a ${b.name}?`,
+        choices: shuffle([capitalize(a.name), capitalize(b.name)]).map(v => ({ value: v, label: v })),
+        correctValue: correct, revealText: correct
       };
     }
 
     function makeMoneyActivity() {
       const level = getSubjectLevel('money');
       const pool = level === 1
-        ? ['recognition','recognition','recognition']
+        ? ['recognition','recognition','recognition','amount']
         : level === 2
-          ? ['recognition','recognition','amount']
-          : ['recognition','amount','amount','buy'];
+          ? ['recognition','amount','amount','buy','compare']
+          : ['recognition','amount','buy','buy','compare','compare'];
       const mode = antiRepeat('moneyRecentModes', pool);
-      if (mode === 'buy') return makeCanYouBuyQuestion();
-      if (mode === 'amount') return makeMoneyAmountQuestion();
+      if (mode === 'buy')     return makeCanYouBuyQuestion();
+      if (mode === 'amount')  return makeMoneyAmountQuestion();
+      if (mode === 'compare') return makeMoneyCompareQuestion();
       return makeMoneyRecognitionQuestion();
     }
 
     function makePatternQuestion() {
       const sets = [
-        { seq: ['🔴','🔵','🔴','🔵','❓'], correct: '🔴', wrong: ['🔵','🟡','🟢'] },
-        { seq: ['⭐','🌙','⭐','🌙','❓'], correct: '⭐', wrong: ['🌙','☀️','☁️'] },
-        { seq: ['🍎','🍌','🍌','🍎','🍌','🍌','❓'], correct: '🍎', wrong: ['🍌','🍓','🍇'] },
-        { seq: ['⬜','⬛','⬜','⬛','❓'], correct: '⬜', wrong: ['⬛','🟪','🟦'] }
+        // AB patterns
+        { seq:['🔴','🔵','🔴','🔵','❓'], correct:'🔴', wrong:['🔵','🟡','🟢'] },
+        { seq:['⭐','🌙','⭐','🌙','❓'], correct:'⭐', wrong:['🌙','☀️','☁️'] },
+        { seq:['⬜','⬛','⬜','⬛','❓'], correct:'⬜', wrong:['⬛','🟪','🟦'] },
+        { seq:['🐶','🐱','🐶','🐱','❓'], correct:'🐶', wrong:['🐱','🐰','🐸'] },
+        { seq:['🍎','🍌','🍎','🍌','❓'], correct:'🍎', wrong:['🍌','🍇','🍓'] },
+        // ABB patterns
+        { seq:['🍎','🍌','🍌','🍎','🍌','🍌','❓'], correct:'🍎', wrong:['🍌','🍓','🍇'] },
+        { seq:['🔴','🔵','🔵','🔴','🔵','🔵','❓'], correct:'🔴', wrong:['🔵','🟡','🟢'] },
+        { seq:['⭐','☀️','☀️','⭐','☀️','☀️','❓'], correct:'⭐', wrong:['☀️','🌙','☁️'] },
+        // ABC patterns
+        { seq:['🔺','🟦','🟢','🔺','🟦','❓'], correct:'🟢', wrong:['🔺','🟦','🔴'] },
+        { seq:['🐶','🐱','🐰','🐶','🐱','❓'], correct:'🐰', wrong:['🐶','🐱','🐸'] },
+        // Size/number patterns
+        { seq:['1️⃣','2️⃣','3️⃣','1️⃣','2️⃣','❓'], correct:'3️⃣', wrong:['1️⃣','4️⃣','2️⃣'] },
+        { seq:['🌕','🌖','🌑','🌕','🌖','❓'], correct:'🌑', wrong:['🌕','🌖','🌗'] },
+        // Shape patterns
+        { seq:['🔴','🔺','🔴','🔺','❓'], correct:'🔴', wrong:['🔺','🟦','🟢'] },
+        { seq:['🟦','🟦','🔺','🟦','🟦','❓'], correct:'🔺', wrong:['🟦','🔴','🟢'] },
+        { seq:['⬆️','➡️','⬇️','⬆️','➡️','❓'], correct:'⬇️', wrong:['⬆️','➡️','⬅️'] }
       ];
       const set = pickRandom(sets);
-      const choices = shuffle([set.correct, ...set.wrong]).slice(0, 4).map(v => ({ value: v, label: v, displayHtml: `<span style="font-size:2rem;">${v}</span>` }));
+      const choices = shuffle([set.correct, ...set.wrong]).slice(0,4).map(v => ({ value: v, label: v, displayHtml: `<span style="font-size:2rem;">${v}</span>` }));
       return {
         promptText: 'What comes next?',
-        visualHtml: `<div style="font-size:2.4rem; line-height:1.5;">${set.seq.join(' ')}</div>`,
+        visualHtml: `<div style="font-size:2.4rem; line-height:1.6;">${set.seq.join(' ')}</div>`,
         subtitle: 'Find the next item in the pattern.',
-        speakText: 'What comes next?',
-        choices,
-        correctValue: set.correct,
-        revealText: set.correct
+        speakText: 'What comes next in the pattern?',
+        choices, correctValue: set.correct, revealText: set.correct
       };
     }
 
     function makeOddOneOutQuestion() {
       const sets = [
-        { prompt: 'Which one does not belong?', items: ['🐶','🐱','🐰','🚗'], correct: '🚗' },
-        { prompt: 'Which one does not belong?', items: ['🍎','🍌','🚀','🍇'], correct: '🚀' },
-        { prompt: 'Which one does not belong?', items: ['🔺','🟦','🐶','🟠'], correct: '🐶' },
-        { prompt: 'Which one does not belong?', items: ['☀️','🌙','⭐','🐟'], correct: '🐟' }
+        // Animals vs objects
+        { items:['🐶','🐱','🐰','🚗'], correct:'🚗', reason:'not an animal' },
+        { items:['🍎','🍌','🚀','🍇'], correct:'🚀', reason:'not a fruit' },
+        { items:['☀️','🌙','⭐','🐟'], correct:'🐟', reason:'not in the sky' },
+        { items:['🚗','🚌','✈️','🍕'], correct:'🍕', reason:'not a vehicle' },
+        { items:['🐶','🐱','🐟','🌸'], correct:'🌸', reason:'not an animal' },
+        // Shapes vs objects
+        { items:['🔺','🟦','🐶','🟠'], correct:'🐶', reason:'not a shape' },
+        { items:['🔴','🟦','🟢','🍎'], correct:'🍎', reason:'not a colored circle' },
+        // Food categories
+        { items:['🍎','🍌','🍇','🥕'], correct:'🥕', reason:'not a fruit' },
+        { items:['🍕','🍔','🌮','🍎'], correct:'🍎', reason:'not a meal' },
+        { items:['🥛','🧃','☕','🍕'], correct:'🍕', reason:'not a drink' },
+        // Numbers
+        { items:['1️⃣','2️⃣','A','3️⃣'], correct:'A', reason:'not a number' },
+        // Weather
+        { items:['☀️','🌧️','❄️','🐸'], correct:'🐸', reason:'not weather' },
+        // Transport
+        { items:['🚗','🚌','🚲','🍔'], correct:'🍔', reason:'not transport' },
+        // Clothing
+        { items:['👕','🧢','👟','🍎'], correct:'🍎', reason:'not clothing' },
+        // Instruments
+        { items:['🎹','🥁','🎸','🚗'], correct:'🚗', reason:'not an instrument' }
       ];
       const set = pickRandom(sets);
       return {
-        promptText: set.prompt,
-        visualHtml: `<div style="font-size:2.4rem; line-height:1.5;">${set.items.join(' ')}</div>`,
+        promptText: 'Which one does not belong?',
+        visualHtml: `<div style="font-size:2.4rem; line-height:1.6;">${set.items.join('  ')}</div>`,
         subtitle: 'Pick the odd one out.',
-        speakText: set.prompt,
+        speakText: 'Which one does not belong?',
         choices: shuffle(set.items).map(v => ({ value: v, label: v, displayHtml: `<span style="font-size:2rem;">${v}</span>` })),
-        correctValue: set.correct,
-        revealText: set.correct
+        correctValue: set.correct, revealText: set.correct
       };
     }
 
     function makeSameDifferentQuestion() {
       const sets = [
-        { visual: '🍎   🍎', correct: 'Same' },
-        { visual: '⭐   🌙', correct: 'Different' },
-        { visual: '🐶   🐶', correct: 'Same' },
-        { visual: '🟦   🔺', correct: 'Different' }
+        { visual:'🍎   🍎', correct:'Same' },    { visual:'⭐   🌙', correct:'Different' },
+        { visual:'🐶   🐶', correct:'Same' },    { visual:'🟦   🔺', correct:'Different' },
+        { visual:'🚗   🚗', correct:'Same' },    { visual:'🍎   🍌', correct:'Different' },
+        { visual:'☀️   ☀️', correct:'Same' },    { visual:'🐱   🐶', correct:'Different' },
+        { visual:'🔴   🔴', correct:'Same' },    { visual:'🔴   🔵', correct:'Different' },
+        { visual:'🎈   🎈', correct:'Same' },    { visual:'🏠   🏡', correct:'Different' }
       ];
       const set = pickRandom(sets);
       return {
         promptText: 'Are these the same or different?',
-        visualHtml: `<div style="font-size:3rem;">${set.visual}</div>`,
+        visualHtml: `<div style="font-size:3.2rem; letter-spacing:0.3em;">${set.visual}</div>`,
         subtitle: 'Pick same or different.',
         speakText: 'Are these the same or different?',
         choices: ['Same','Different'].map(v => ({ value: v, label: v })),
-        correctValue: set.correct,
-        revealText: set.correct
+        correctValue: set.correct, revealText: set.correct
       };
     }
 
     function makeGroupBelongsQuestion() {
       const sets = [
-        { prompt: 'Which one belongs with the animals?', correct: '🐶 Dog', wrong: ['🚗 Car','🪑 Chair','⚽ Ball'] },
-        { prompt: 'Which one belongs with the fruits?', correct: '🍎 Apple', wrong: ['🚀 Rocket','🧢 Cap','🚲 Bike'] },
-        { prompt: 'Which one belongs with the shapes?', correct: '⭐ Star', wrong: ['🍎 Apple','🐶 Dog','🚗 Car'] }
+        { prompt:'Which one belongs with the animals?',   correct:'🐶 Dog',       wrong:['🚗 Car','🪑 Chair','⚽ Ball'] },
+        { prompt:'Which one belongs with the fruits?',    correct:'🍎 Apple',     wrong:['🚀 Rocket','🧢 Cap','🚲 Bike'] },
+        { prompt:'Which one belongs with the shapes?',    correct:'⭐ Star',      wrong:['🍎 Apple','🐶 Dog','🚗 Car'] },
+        { prompt:'Which one belongs with the vehicles?',  correct:'🚂 Train',     wrong:['🍕 Pizza','🐸 Frog','🌸 Flower'] },
+        { prompt:'Which one belongs with the food?',      correct:'🍕 Pizza',     wrong:['🚗 Car','⭐ Star','🐶 Dog'] },
+        { prompt:'Which one belongs with the clothes?',   correct:'👟 Shoe',      wrong:['🍎 Apple','🚗 Car','⭐ Star'] },
+        { prompt:'Which one belongs with the numbers?',   correct:'3️⃣ Three',    wrong:['🐶 Dog','🍎 Apple','🚗 Car'] },
+        { prompt:'Which one belongs with the weather?',   correct:'☀️ Sun',       wrong:['🍕 Pizza','🐶 Dog','🚲 Bike'] },
+        { prompt:'Which one belongs with the instruments?',correct:'🥁 Drum',    wrong:['🚗 Car','🍎 Apple','🌸 Flower'] },
+        { prompt:'Which one belongs in the sky?',         correct:'✈️ Airplane', wrong:['🐟 Fish','🚗 Car','🌸 Flower'] },
+        { prompt:'Which one belongs with the sports?',    correct:'⚽ Ball',      wrong:['🍕 Pizza','🐶 Dog','📚 Book'] },
+        { prompt:'Which one belongs with the letters?',   correct:'🅰️ Letter A', wrong:['🍎 Apple','🚗 Car','🐶 Dog'] }
       ];
       const set = pickRandom(sets);
       const labels = shuffle([set.correct, ...set.wrong]);
@@ -2891,26 +3327,48 @@
         subtitle: 'Pick the one that belongs.',
         speakText: set.prompt,
         choices: labels.map(l => ({ value: l, label: l })),
-        correctValue: set.correct,
-        revealText: set.correct
+        correctValue: set.correct, revealText: set.correct
       };
     }
 
     function makeStorySequenceQuestion() {
       const sets = [
-        { prompt: 'What comes next?', visual: '🛏️  ➜  🪥  ➜  🍳  ➜  ? ', correct: '🎒 Go to school', wrong: ['🌙 Go to sleep', '🍦 Eat ice cream', '📺 Watch TV'] },
-        { prompt: 'What comes next?', visual: '🌧️  ➜  ☂️  ➜  🚶  ➜  ? ', correct: '🏠 Go inside', wrong: ['🛏️ Go to bed', '🎂 Eat cake', '⚽ Play soccer'] }
+        { prompt:'What comes next?', visual:'🛏️ ➜ 🪥 ➜ 🍳 ➜ ?', correct:'🎒 Go to school', wrong:['🌙 Go to sleep','🍦 Eat ice cream','📺 Watch TV'] },
+        { prompt:'What comes next?', visual:'🌧️ ➜ ☂️ ➜ 🚶 ➜ ?', correct:'🏠 Go inside', wrong:['🛏️ Go to bed','🎂 Eat cake','⚽ Play soccer'] },
+        { prompt:'What comes next?', visual:'🌱 ➜ 💧 ➜ ☀️ ➜ ?', correct:'🌸 Flower grows', wrong:['❄️ Snow falls','🍕 Eat pizza','🚗 Drive away'] },
+        { prompt:'What comes next?', visual:'🍽️ ➜ 🍴 ➜ 😋 ➜ ?', correct:'🧹 Clean up', wrong:['🛒 Go shopping','🐶 Walk the dog','🎮 Play games'] },
+        { prompt:'What comes next?', visual:'🎨 ➜ 🖌️ ➜ 🖼️ ➜ ?', correct:'👏 Show your art', wrong:['🛏️ Go to sleep','🍕 Eat pizza','🚿 Take a shower'] },
+        { prompt:'What comes next?', visual:'🛒 ➜ 💳 ➜ 🛍️ ➜ ?', correct:'🏠 Go home', wrong:['🌧️ Rain starts','🎂 Bake a cake','⚽ Play soccer'] },
+        { prompt:'What comes next?', visual:'😴 ➜ ⏰ ➜ 🧹 ➜ ?', correct:'🍳 Eat breakfast', wrong:['🌙 Go back to sleep','🎮 Play games','🚗 Drive a car'] },
+        { prompt:'What comes next?', visual:'🌊 ➜ 🩱 ➜ 🏊 ➜ ?', correct:'🧺 Dry off', wrong:['⛷️ Go skiing','🍕 Eat pizza','📚 Read a book'] }
       ];
       const set = pickRandom(sets);
       const choices = shuffle([set.correct, ...set.wrong]).map(v => ({ value: v, label: v }));
       return {
         promptText: set.prompt,
-        visualHtml: `<div style="font-size:2.2rem; line-height:1.5;">${set.visual}</div>`,
+        visualHtml: `<div style="font-size:2.2rem; line-height:1.6;">${set.visual}</div>`,
         subtitle: 'Pick the next step in the story.',
         speakText: set.prompt,
-        choices,
-        correctValue: set.correct,
-        revealText: set.correct
+        choices, correctValue: set.correct, revealText: set.correct
+      };
+    }
+
+    function makeLogicWhatIsWrongQuestion() {
+      const sets = [
+        { visual:'🐟 🐟 🐟 🚗 🐟', correct:'🚗 Car', wrong:['🐟 Fish','⭐ Star','🌙 Moon'], hint:'One of these does not swim' },
+        { visual:'☀️ ☀️ 🌧️ ☀️ ☀️', correct:'🌧️ Rain', wrong:['☀️ Sun','⭐ Star','🌈 Rainbow'], hint:'One of these is not sunny' },
+        { visual:'🍎 🍌 🍇 🚀 🍓', correct:'🚀 Rocket', wrong:['🍎 Apple','🍇 Grapes','🍓 Strawberry'], hint:'One of these cannot be eaten' },
+        { visual:'🔺 🟦 🔴 🔺 🟦', correct:'🔴 Red circle', wrong:['🔺 Triangle','🟦 Square','🔵 Blue circle'], hint:'One of these is a different shape' },
+        { visual:'1️⃣ 2️⃣ 🐶 3️⃣ 4️⃣', correct:'🐶 Dog', wrong:['1️⃣ One','3️⃣ Three','4️⃣ Four'], hint:'One of these is not a number' }
+      ];
+      const set = pickRandom(sets);
+      const choices = shuffle([set.correct, ...set.wrong]).map(v => ({ value: v, label: v }));
+      return {
+        promptText: 'What does not belong here?',
+        visualHtml: `<div><div style="font-size:2.4rem; line-height:1.6;">${set.visual}</div><div style="font-size:1rem; color:var(--muted); margin-top:8px;">${set.hint}</div></div>`,
+        subtitle: 'Find the one that does not fit.',
+        speakText: `What does not belong here? ${set.hint}.`,
+        choices, correctValue: set.correct, revealText: set.correct
       };
     }
 
@@ -2919,13 +3377,14 @@
       const pool = level === 1
         ? ['pattern','odd','same']
         : level === 2
-          ? ['pattern','odd','same','group']
-          : ['pattern','odd','same','group','story'];
+          ? ['pattern','odd','same','group','story']
+          : ['pattern','odd','same','group','story','wrong'];
       const mode = antiRepeat('logicRecentModes', pool);
       if (mode === 'pattern') return makePatternQuestion();
       if (mode === 'same')    return makeSameDifferentQuestion();
       if (mode === 'group')   return makeGroupBelongsQuestion();
       if (mode === 'story')   return makeStorySequenceQuestion();
+      if (mode === 'wrong')   return makeLogicWhatIsWrongQuestion();
       return makeOddOneOutQuestion();
     }
 
